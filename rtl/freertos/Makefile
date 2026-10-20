@@ -977,15 +977,15 @@ endif
 ifeq ($(ARCH),xtensa)
 CPU_SPECIFIC_COMMON_UNITS=$(SYSUTILSUNIT) $(MATHUNIT) $(CLASSESUNIT) $(FGLUNIT) $(MACPASUNIT) $(TYPINFOUNIT) $(TYPESUNIT) $(RTLCONSTSUNIT) $(GETOPTSUNIT) $(LINEINFOUNIT)
 ifeq ($(SUBARCH),lx6)
-CPU_UNITS=esp32 espidf_40100 espidf_40200 espidf_40400 espidf_50000 espidf_50200
+CPU_UNITS=esp32 espidf_40100 espidf_40200 espidf_40400 espidf_50000 espidf_50200 espidf_60100
 CPU_UNITS_DEFINED=1
 endif
 ifeq ($(SUBARCH),lx7hf)
-CPU_UNITS=esp32s3 espidf_40400 espidf_50000 espidf_50200
+CPU_UNITS=esp32s3 espidf_40400 espidf_50000 espidf_50200 espidf_60100
 CPU_UNITS_DEFINED=1
 endif
 ifeq ($(SUBARCH),lx7)
-CPU_UNITS=esp32s2 espidf_40400 espidf_50000 espidf_50200
+CPU_UNITS=esp32s2 espidf_40400 espidf_50000 espidf_50200 espidf_60100
 CPU_UNITS_DEFINED=1
 endif
 ifeq ($(SUBARCH),lx106)

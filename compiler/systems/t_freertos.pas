@@ -1583,9 +1583,17 @@ begin
     else
 {$endif XTENSA}
     begin
-      Info.ExeCmd[1]:=Info.ExeCmd[1]+' -u call_user_start_cpu0 -u ld_include_panic_highint_hdl -u esp_app_desc -u vfs_include_syscalls_impl -u pthread_include_pthread_impl -u pthread_include_pthread_cond_impl -u pthread_include_pthread_local_storage_impl -u newlib_include_locks_impl '+
-       '-u newlib_include_heap_impl -u newlib_include_syscalls_impl -u newlib_include_pthread_impl -u app_main -u uxTopUsedPriority '+
-       '-L $IDF_PATH/components/esp_rom/'+cntrlr+'/ld ';
+      if idf_version>=60100 then
+        Info.ExeCmd[1]:=Info.ExeCmd[1]+' -u call_user_start_cpu0 -u ld_include_panic_highint_hdl -u esp_app_desc -u app_main -u uxTopUsedPriority '+
+          '-u esp_libc_include_heap_impl -u esp_libc_include_reent_syscalls_impl -u esp_libc_include_syscalls_impl -u esp_libc_include_pthread_impl '+
+          '-u esp_libc_include_assert_impl -u esp_libc_include_getentropy_impl -u esp_libc_include_init_funcs -u esp_libc_init_funcs '+
+          '-u pthread_include_pthread_impl -u pthread_include_pthread_cond_var_impl -u pthread_include_pthread_local_storage_impl '+
+          '-u pthread_include_pthread_rwlock_impl -u pthread_include_pthread_semaphore_impl '+
+          '-L $IDF_PATH/components/esp_rom/'+cntrlr+'/ld '
+      else
+        Info.ExeCmd[1]:=Info.ExeCmd[1]+' -u call_user_start_cpu0 -u ld_include_panic_highint_hdl -u esp_app_desc -u vfs_include_syscalls_impl -u pthread_include_pthread_impl -u pthread_include_pthread_cond_impl -u pthread_include_pthread_local_storage_impl -u newlib_include_locks_impl '+
+         '-u newlib_include_heap_impl -u newlib_include_syscalls_impl -u newlib_include_pthread_impl -u app_main -u uxTopUsedPriority '+
+         '-L $IDF_PATH/components/esp_rom/'+cntrlr+'/ld ';
       if idf_version<40400 then
         Info.ExeCmd[1]:=Info.ExeCmd[1]+' -L $IDF_PATH/components/'+cntrlr+'/ld'
       else
@@ -1619,7 +1627,11 @@ begin
             //Currently not supported
           end;
       if current_settings.controllertype = ct_esp32s3 then
-        if idf_version>=50200 then
+        if idf_version>=60100 then
+          Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T '+cntrlr+'.rom.libgcc.ld -T '+cntrlr+'.rom.libc.ld -T '+cntrlr+'.rom.version.ld'+
+            ' -T $IDF_PATH/components/esp_hal_wdt/'+cntrlr+'/rom.wdt.ld'+
+            ' -T $IDF_PATH/components/esp_hal_regi2c/'+cntrlr+'/rom.regi2c.ld'
+        else if idf_version>=50200 then
           Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T '+cntrlr+'.rom.libgcc.ld -T '+cntrlr+'.rom.newlib.ld -T '+cntrlr+'.rom.version.ld'
         else if idf_version>=50000 then
           Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T '+cntrlr+'.rom.libgcc.ld -T '+cntrlr+'.rom.newlib.ld -T '+cntrlr+'.rom.version.ld'
@@ -1735,8 +1747,11 @@ begin
       success:=FindFileInExeLocations('python',true,binstr);
       cmdstr:=idfpath+'/components/esptool_py/esptool/esptool.py ';
 {$elseif defined(UNIX)}
-      binstr:=TargetFixPath(idfpath,false)+'/components/esptool_py/esptool/esptool.py';
-      cmdstr:='';
+      success:=FindFileInExeLocations('python3',true,binstr);
+      if idf_version>=60100 then
+        cmdstr:='-m esptool '
+      else
+        cmdstr:=idfpath+'/components/esptool_py/esptool/esptool.py ';
 {$else}
       binstr:='python';
       cmdstr:=idfpath+'/components/esptool_py/esptool/esptool.py ';
