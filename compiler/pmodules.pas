@@ -513,6 +513,8 @@ implementation
                 CheckAddUnit('espidf_40400')
               else if (idf_version>=50000) and (idf_version<50200) then
                 CheckAddUnit('espidf_50000')
+              else if idf_version>=60100 then
+                CheckAddUnit('espidf_60100')
               else if idf_version>=50200 then
                 CheckAddUnit('espidf_50200')
               else
@@ -524,6 +526,8 @@ implementation
                 CheckAddUnit('espidf_40400')
               else if (idf_version>=50000) and (idf_version<50200) then
                 CheckAddUnit('espidf_50000')
+              else if idf_version>=60100 then
+                CheckAddUnit('espidf_60100')
               else if idf_version>=50200 then
                 CheckAddUnit('espidf_50200')
               else
