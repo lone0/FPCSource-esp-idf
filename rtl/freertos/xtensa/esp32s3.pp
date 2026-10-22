@@ -24,29 +24,22 @@ unit esp32s3;
     var
       _stack_top: record end; public name '_stack_top';
       operatingsystem_result: longint; external name 'operatingsystem_result';
+      c_stdout: pointer; external name 'stdout';
 
     procedure PASCALMAIN; external name 'PASCALMAIN';
 
     procedure esp_deep_sleep_start;external;
     procedure putchar(c : AnsiChar);external;
     function getchar : AnsiChar;external;
-    function __getreent : pointer;external;
     procedure fflush(f : pointer);external;
     procedure vTaskDelay(xTicksToDelay: uint32); external;
-
-    procedure flushOutput(var t : TextRec);
-      begin
-        fflush(ppointer(__getreent+8)^);
-      end;
-
 
     procedure _FPC_haltproc; public name '_haltproc';noreturn;
       begin
         if operatingsystem_result <> 0 then
           writeln('Runtime error ', operatingsystem_result);
-
         writeln('_haltproc called, exit code: ',operatingsystem_result);
-        flushOutput(TextRec(Output));
+        fflush(c_stdout);
         repeat
           // Allow other tasks to run
           // Do not enter deep sleep, can lead to problems with flashing
