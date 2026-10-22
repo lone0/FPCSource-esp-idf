@@ -1538,6 +1538,11 @@ begin
         set_system_compvar('IDF_VERSION','50201');
         idf_version:=50200;
       end;
+    ct_esp32s31:
+      begin
+        set_system_compvar('IDF_VERSION','60100');
+        idf_version:=60100;
+      end;
 {$endif RISCV32}
     else
       begin
