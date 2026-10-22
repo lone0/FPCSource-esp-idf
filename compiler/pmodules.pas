@@ -576,6 +576,13 @@ implementation
               else
                 Comment(V_Warning, 'Unsupported esp-idf version');
             end;
+          if (current_settings.controllertype=ct_esp32s31) then
+            begin
+              if idf_version>=60100 then
+                CheckAddUnit('esp32s31idf_60100')
+              else
+                Comment(V_Warning, 'Unsupported esp-idf version');
+            end;
 {$endif RISCV32}
 {$ifdef AVR}
         if not(curr.is_unit) and (target_info.system=system_avr_embedded) and

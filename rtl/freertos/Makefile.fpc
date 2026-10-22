@@ -102,7 +102,7 @@ CPU_UNITS_DEFINED=1
 endif
 ifeq ($(SUBARCH),rv32imafc)
 override FPCOPT+=-Cprv32imafc
-CPU_UNITS=
+CPU_UNITS=esp32s31 esp32s31idf_60100
 CPU_UNITS_DEFINED=1
 endif
 ifeq ($(CPU_UNITS_DEFINED),)

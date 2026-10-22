@@ -82,7 +82,8 @@ Type
       ct_CH32Vxxxx6,
       ct_CH32Vxxxx8,
       ct_CH32VxxxxB,
-      ct_CH32VxxxxC
+      ct_CH32VxxxxC,
+      ct_esp32s31
      );
 
    tcontrollerdatatype = record
@@ -141,7 +142,8 @@ Const
       (controllertypestr:'CH32VXXXX6' ; controllerunitstr:'CH32VxBootstrap';   cputype:cpu_rv32imac; fputype:fpu_none; flashbase:$00000000; flashsize:$00008000; srambase:$20000000; sramsize:$00002800),
       (controllertypestr:'CH32VXXXX8' ; controllerunitstr:'CH32VxBootstrap';   cputype:cpu_rv32imac; fputype:fpu_none; flashbase:$00000000; flashsize:$00010000; srambase:$20000000; sramsize:$00008000),
       (controllertypestr:'CH32VXXXXB' ; controllerunitstr:'CH32VxBootstrap';   cputype:cpu_rv32imac; fputype:fpu_none; flashbase:$00000000; flashsize:$00020000; srambase:$20000000; sramsize:$00010000),
-      (controllertypestr:'CH32VXXXXC' ; controllerunitstr:'CH32VxBootstrap';   cputype:cpu_rv32imac; fputype:fpu_none; flashbase:$00000000; flashsize:$00040000; srambase:$20000000; sramsize:$00020000)
+      (controllertypestr:'CH32VXXXXC' ; controllerunitstr:'CH32VxBootstrap';   cputype:cpu_rv32imac; fputype:fpu_none; flashbase:$00000000; flashsize:$00040000; srambase:$20000000; sramsize:$00020000),
+      (controllertypestr:'ESP32S31'; controllerunitstr:'ESP32S31'; cputype:cpu_rv32imafc; fputype:fpu_none; flashbase:$00000000; flashsize:4*1024*1024; srambase:$20000000; sramsize:512*1024)
    );
    {$POP}
 
