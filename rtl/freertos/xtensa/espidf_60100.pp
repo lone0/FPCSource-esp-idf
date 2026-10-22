@@ -19,15 +19,37 @@ unit espidf_60100;
 
 interface
 
+{ Aligned with espidf_50200, using IDF v6.1 library names.
+  Extra linklibs are only those hello_world.pas / this SPIRAM image need. }
+
 {$linklib app_update,static}
 {$linklib bootloader_support,static}
-{$linklib cxx,static}
-{$linklib efuse,static}
-{$linklib esp_app_format,static}
 {$linklib esp_bootloader_format,static}
-{$linklib esp_common,static}
+//{$linklib core,static}
+{$linklib coexist,static}
+{$linklib cxx,static}
+{$linklib driver,static}
 {$linklib esp_driver_dma,static}
 {$linklib esp_driver_gpio,static}
+{$linklib esp_driver_uart,static}
+{$linklib esp_driver_usb_serial_jtag,static}
+{$linklib efuse,static}
+{$linklib esp_app_format,static}
+{$linklib esp_coex,static}
+{$linklib esp_common,static}
+{$linklib esp_hw_support,static}
+{$linklib esp_mm,static}
+{$linklib esp_partition,static}
+{$linklib esp_phy,static}
+//{$linklib esp_pm,static}
+{$linklib esp_psram,static}
+{$linklib esp_ringbuf,static}
+{$linklib esp_rom,static}
+{$linklib esp_stdio,static}
+{$linklib esp_system,static}
+{$linklib esp_timer,static}
+{$linklib freertos,static}
+{$linklib hal,static}
 {$linklib esp_hal_ana_conv,static}
 {$linklib esp_hal_clock,static}
 {$linklib esp_hal_dma,static}
@@ -42,30 +64,22 @@ interface
 {$linklib esp_hal_uart,static}
 {$linklib esp_hal_usb,static}
 {$linklib esp_hal_wdt,static}
-{$linklib esp_hw_support,static}
-{$linklib esp_libc,static}
-{$linklib esp_mm,static}
-{$linklib esp_partition,static}
-{$linklib esp_pm,static}
-{$linklib esp_rom,static}
-{$linklib esp_security,static}
-{$linklib esp_stdio,static}
-{$linklib esp_system,static}
-{$linklib esp_timer,static}
-{$linklib freertos,static}
-{$linklib hal,static}
 {$linklib heap,static}
 {$linklib log,static}
-{$linklib mbedtls,static}
+{$linklib mbedcrypto,static}
+{$linklib esp_libc,static}
 {$linklib pthread,static}
 {$linklib soc,static}
 {$linklib spi_flash,static}
+{$linklib vfs,static}
 {$linklib xt_hal.a,static}
 {$linklib xtensa,static}
 
 {$linklib c,static}
 {$linklib m,static}
 {$linklib gcc,static}
+{$linklib esp_gdbstub,static}
+{$linklib espcoredump,static}
 
 implementation
 
