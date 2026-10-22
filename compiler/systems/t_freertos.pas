@@ -1550,6 +1550,11 @@ begin
         cntrlr:='esp32c6';
         { Extra option required to generate bin file }
         extraopts:=' --flash-mmu-page-size 32KB ';
+      end;
+    ct_esp32s31:
+      begin
+        cntrlr:='esp32s31';
+        extraopts:=' --flash-mmu-page-size 32KB ';
       end
     else
       cntrlr:='';
@@ -1677,15 +1682,26 @@ begin
              cntrlr+'.rom.ble_dtm.ld -T '+cntrlr+'.rom.ble_test.ld -T '+cntrlr+'.rom.ble_scan.ld';
          if idf_version>=50500 then
            Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T '+cntrlr+'.rom.libc.ld';
-        end
-        else
-          Comment(V_Error,'Unsupported esp-idf version specified');
+        end;
 
       if current_settings.controllertype=ct_esp32c6 then
         if idf_version>=50200 then
           Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T '+cntrlr+'.rom.rvfp.ld -T '+cntrlr+'.rom.newlib.ld -T '+cntrlr+'.rom.version.ld -T '+cntrlr+'.rom.phy.ld -T '+cntrlr+'.rom.coexist.ld -T '+cntrlr+'.rom.net80211.ld -T '+cntrlr+'.rom.pp.ld -T '+cntrlr+'.rom.wdt.ld -T '+cntrlr+'.rom.systimer.ld -T '+cntrlr+'.rom.newlib-normal.ld -T '+cntrlr+'.rom.heap.ld'
         else
          Comment(V_Error,'Unsupported esp-idf version specified');
+
+      if current_settings.controllertype=ct_esp32s31 then
+        if idf_version>=60100 then
+          begin
+            Info.ExeCmd[1]:=Info.ExeCmd[1]+' -L $IDF_PATH/components/heap/port/'+cntrlr+'/ld';
+            Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T '+cntrlr+'.rom.libgcc.ld -T '+cntrlr+'.rom.rvfp.ld -T '+cntrlr+'.rom.libc.ld -T '+cntrlr+'.rom.newlib.ld -T '+cntrlr+'.rom.version.ld -T '+cntrlr+'.rom.newlib-nano.ld';
+            Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T '+cntrlr+'.rom.phy.ld -T '+cntrlr+'.rom.coexist.ld -T '+cntrlr+'.rom.net80211.ld -T '+cntrlr+'.rom.pp.ld';
+            Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T '+cntrlr+'.rom.spiflash.ld -T '+cntrlr+'.rom.heap.ld';
+            Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T $IDF_PATH/components/esp_hal_wdt/'+cntrlr+'/rom.wdt.ld';
+            Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T $IDF_PATH/components/esp_hal_systimer/'+cntrlr+'/rom.systimer.ld';
+          end
+        else
+          Comment(V_Error,'Unsupported esp-idf version specified');
   {$endif RISCV32}
       Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T '+cntrlr+'.peripherals.ld'
     end;
