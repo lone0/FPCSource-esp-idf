@@ -1589,6 +1589,10 @@ begin
           '-u esp_libc_include_assert_impl -u esp_libc_include_getentropy_impl -u esp_libc_include_init_funcs -u esp_libc_init_funcs '+
           '-u pthread_include_pthread_impl -u pthread_include_pthread_cond_var_impl -u pthread_include_pthread_local_storage_impl '+
           '-u pthread_include_pthread_rwlock_impl -u pthread_include_pthread_semaphore_impl '+
+          '-u vfs_include_syscalls_impl -u uart_vfs_include_dev_init -u esp_vfs_include_console_register '+
+          '-u esp_system_include_startup_funcs -u start_app -u start_app_other_cores '+
+          '-u esp_timer_init_include_func -u esp_efuse_startup_include_func -u esp_flash_spi_init_include_func '+
+          '-u esp_sleep_gpio_include -u usb_serial_jtag_vfs_include_dev_init -u usb_serial_jtag_connection_monitor_include '+
           '-L $IDF_PATH/components/esp_rom/'+cntrlr+'/ld '
       else
         Info.ExeCmd[1]:=Info.ExeCmd[1]+' -u call_user_start_cpu0 -u ld_include_panic_highint_hdl -u esp_app_desc -u vfs_include_syscalls_impl -u pthread_include_pthread_impl -u pthread_include_pthread_cond_impl -u pthread_include_pthread_local_storage_impl -u newlib_include_locks_impl '+
@@ -1603,7 +1607,9 @@ begin
       Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T '+cntrlr+'.rom.ld -T '+cntrlr+'.rom.api.ld';
 {$ifdef XTENSA}
       if current_settings.controllertype = ct_esp32 then
-        if idf_version>=50200 then
+        if idf_version>=60100 then
+          Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T '+cntrlr+'.rom.libgcc.ld -T '+cntrlr+'.rom.newlib-data.ld -T '+cntrlr+'.rom.syscalls.ld -T '+cntrlr+'.rom.libc-funcs.ld'
+        else if idf_version>=50200 then
           Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T '+cntrlr+'.rom.libgcc.ld -T '+cntrlr+'.rom.newlib-data.ld -T '+cntrlr+'.rom.syscalls.ld -T '+cntrlr+'.rom.newlib-funcs.ld'
         else if idf_version>=50000 then
           Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T '+cntrlr+'.rom.libgcc.ld -T '+cntrlr+'.rom.newlib-data.ld -T '+cntrlr+'.rom.syscalls.ld -T '+cntrlr+'.rom.newlib-funcs.ld'
@@ -1616,7 +1622,9 @@ begin
             //Currently not supported
           end;
       if current_settings.controllertype = ct_esp32s2 then
-        if idf_version>=50200 then
+        if idf_version>=60100 then
+          Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T '+cntrlr+'.rom.libgcc.ld -T '+cntrlr+'.rom.libc-funcs.ld -T '+cntrlr+'.rom.newlib-data.ld -T '+cntrlr+'.rom.spiflash_legacy.ld'
+        else if idf_version>=50200 then
           Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T '+cntrlr+'.rom.libgcc.ld -T '+cntrlr+'.rom.newlib-funcs.ld -T '+cntrlr+'.rom.newlib-data.ld -T '+cntrlr+'.rom.spiflash.ld'
         else if idf_version>=50000 then
           Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T '+cntrlr+'.rom.libgcc.ld -T '+cntrlr+'.rom.newlib-funcs.ld -T '+cntrlr+'.rom.newlib-data.ld -T '+cntrlr+'.rom.spiflash.ld'
