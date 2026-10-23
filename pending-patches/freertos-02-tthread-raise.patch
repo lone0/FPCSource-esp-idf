@@ -1,0 +1,20 @@
+diff --git a/rtl/freertos/tthread.inc b/rtl/freertos/tthread.inc
+index 43240450..501db786 100644
+--- a/rtl/freertos/tthread.inc
++++ b/rtl/freertos/tthread.inc
+@@ -69,10 +69,12 @@ procedure TThread.DoTerminate;
+ 
+ procedure TThread.SysCreate(CreateSuspended: Boolean;
+                             const StackSize: SizeUInt);
+-var
+-  Flags: cardinal;
+ begin
+-  AddThread (Self);
++  { freertos thread stub: upstream only counts threads and never starts
++    one, which would silently pretend to thread. Fail loud instead -
++    consistent with the system unit's NoThreadError contract. }
++  raise Exception.Create('freertos: TThread is a stub in this RTL, real '
++                        +'threads are not supported (see rtl/freertos/tthread.inc)');
+ end;
+ 
+ 

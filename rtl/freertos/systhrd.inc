@@ -76,6 +76,41 @@ procedure SysLeaveCriticalSection(var cs);
   begin
   end;
 
+function  SysRTLEventCreate : PRTLEvent;
+  begin
+    { Only creation is benign: units like Classes create an (internal,
+      never-used) event during initialization (TMultiReadExclusiveWrite-
+      Synchronizer.Create) and must not die at startup. The non-waiting
+      manipulators (destroy/set/reset) stay no-op as well; ONLY the
+      waiting entries keep the loud NoThreadError stub. }
+    Result := nil;
+  end;
+
+procedure SysRTLEventNoOp(AEvent : PRTLEvent);
+  begin
+    { Benign for the whole non-waiting event surface:
+      - destroy of the nil event created above (unit finalizations
+        e.g. Classes.CommonDone must run to the end),
+      - set/reset: TMultiReadExclusiveWriteSynchronizer.Create calls
+        RTLEventResetEvent on its fresh event during Classes unit
+        initialization, we must stay quiet here.
+      ONLY the waiting entries below stay loud (NoThreadError). }
+  end;
+
+function  SysBasicEventCreate(EventAttributes : Pointer;
+          AManualReset, InitialState : Boolean; const Name : ansistring) : pEventState;
+  begin
+    { same contract as SysRTLEventCreate: benign creation for unit
+      initialization; explicit use fails loud. }
+    Result := nil;
+  end;
+
+procedure SysBasicEventNoOp(state : pEventState);
+  begin
+    { benign counterpart of SysRTLEventNoOp: destroy + set/reset stay
+      no-op for unit initialization/teardown housekeeping. }
+  end;
+
 const
   FreeRTOSThreadManager : TThreadManager = (
     InitManager            : Nil;
@@ -106,15 +141,15 @@ const
     RelocateThreadVar      : TRelocateThreadVarHandler(@NoThreadError);
     AllocateThreadVars     : @NoThreadError;
     ReleaseThreadVars      : @NoThreadError;
-    BasicEventCreate       : TBasicEventCreateHandler(@NoThreadError);
-    BasicEventdestroy      : TBasicEventHandler(@NoThreadError);
-    BasicEventResetEvent   : TBasicEventHandler(@NoThreadError);
-    BasicEventSetEvent     : TBasicEventHandler(@NoThreadError);
+    BasicEventCreate       : TBasicEventCreateHandler(@SysBasicEventCreate);
+    BasicEventdestroy      : TBasicEventHandler(@SysBasicEventNoOp);
+    BasicEventResetEvent   : TBasicEventHandler(@SysBasicEventNoOp);
+    BasicEventSetEvent     : TBasicEventHandler(@SysBasicEventNoOp);
     BasicEventWaitFor      : TBasicEventWaitForHandler(@NoThreadError);
-    RTLEventCreate         : TRTLCreateEventHandler(@NoThreadError);
-    RTLEventdestroy        : TRTLEventHandler(@NoThreadError);
-    RTLEventSetEvent       : TRTLEventHandler(@NoThreadError);
-    RTLEventResetEvent     : TRTLEventHandler(@NoThreadError);
+    RTLEventCreate         : TRTLCreateEventHandler(@SysRTLEventCreate);
+    RTLEventdestroy        : TRTLEventHandler(@SysRTLEventNoOp);
+    RTLEventSetEvent       : TRTLEventHandler(@SysRTLEventNoOp);
+    RTLEventResetEvent     : TRTLEventHandler(@SysRTLEventNoOp);
     RTLEventWaitFor        : TRTLEventHandler(@NoThreadError);
     RTLEventwaitfortimeout : TRTLEventHandlerTimeout(@NoThreadError);
   );
