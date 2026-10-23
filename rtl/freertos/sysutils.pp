@@ -239,6 +239,18 @@ end;
                               Locale Functions
 ****************************************************************************}
 
+{ The widestringmanager compare/upper/lower proc pointers must be installed at
+  unit start, or AnsiCompareStr/AnsiCompareText/AnsiStrComp and everything
+  built on them (e.g. TStringList.Sort -> DoCompareText) call through a NIL
+  pointer. Other sysutils variants (unix, os2, amicommon) call InitInternational
+  in their initialization section; freertos did not (@@ root-cause of
+  InstrFetchProhibited PC=0). InitInternational in sysutils.inc installs the
+  generic Ansi routines via InitInternationalGeneric. }
+Procedure InitInternational;
+begin
+  InitInternationalGeneric;
+end;
+
 Procedure GetLocalTime(var SystemTime: TSystemTime);
 begin
 end ;
@@ -301,6 +313,7 @@ end;
 
 Initialization
   InitExceptions;
+  InitInternational;
 Finalization
   FreeTerminateProcs;
   DoneExceptions;
