@@ -13,11 +13,11 @@
 > use `SUBARCH=lx7hf`, native `ppcx64` bootstrap, `CROSSOPT='-XPxtensa-esp32s3-elf- -Cfhard'`,
 > RTL needs `OPT=-CfHARD`), and the rewind patch series is handled via
 > **[`pending-patches/`](./pending-patches/README.md)**: freertos-01
-> (thread-stub events) and freertos-03 (InitInternational) are **already
-> applied** (history section there); freertos-02 (tthread-raise) and
-> xtensa-04 (finalize-order) remain **pending — apply ONLY when a program
-> hits the deficiency each one fixes**; each patch documents its own
-> discriminator test. Project charter (§2 rule 3 below applies verbatim):
+> (thread-stub events), freertos-03 (InitInternational) and xtensa-04
+> (finalize order) are **already applied** (history section there);
+> freertos-02 (tthread-raise) remains **pending — apply ONLY when a
+> program hits its deficiency** (nothing creates TThread yet); each
+> patch documents its own discriminator test. Project charter (§2 rule 3 below applies verbatim):
 > minimal fixes to unblock ESP32 support; never improve FreeRTOS support.
 
 **State one-liner (2026-10-23):** working FPC → ESP32-S3 cross toolchain
