@@ -114,7 +114,7 @@ uses
 
 implementation
 
-uses cutils, cclasses;
+uses cutils, cclasses, globals, systems;
 
 {*****************************************************************************
                                  taicpu Constructors
@@ -634,7 +634,10 @@ uses cutils, cclasses;
             result:=taicpu.op_reg_ref(A_LW,r,ref);
 {$endif cpu64bitalu}
           R_FPUREGISTER:
-            result:=taicpu.op_reg_ref(A_FLD,r,ref);
+            if target_info.abi in [abi_riscv_ilp32f,abi_riscv_lp64f] then
+              result:=taicpu.op_reg_ref(A_FLW,r,ref)
+            else
+              result:=taicpu.op_reg_ref(A_FLD,r,ref);
           else
             internalerror(2005123101);
         end;
@@ -651,7 +654,10 @@ uses cutils, cclasses;
             result:=taicpu.op_reg_ref(A_SW,r,ref);
 {$endif cpu64bitalu}
           R_FPUREGISTER:
-            result:=taicpu.op_reg_ref(A_FSD,r,ref);
+            if target_info.abi in [abi_riscv_ilp32f,abi_riscv_lp64f] then
+              result:=taicpu.op_reg_ref(A_FSW,r,ref)
+            else
+              result:=taicpu.op_reg_ref(A_FSD,r,ref);
           else
             internalerror(2005123102);
         end;

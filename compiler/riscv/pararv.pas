@@ -482,8 +482,8 @@ implementation
         firstparaloc:=true;
 
         { Parameters passed in 2 registers are passed in a register starting with an even number. }
-        if isVararg and
-           (paralen > sizeof(AInt)) and
+        { An 8-byte value in GPRs starts on an even register (a0/a2/...). }
+        if (paralen > sizeof(AInt)) and
            (loc = LOC_REGISTER) and
            (nextintreg <= rv_max_int_param_reg) and
            odd(nextintreg) then

@@ -254,7 +254,9 @@ unit agrvgas;
         );
       begin
         result := inherited MakeCmdLine;
-        Replace(result,'$ARCH',arch_str[current_settings.fputype=fpu_fd,current_settings.cputype]);
+        { ilp32f uses the F-only arch row so -march keeps C and omits D. }
+        Replace(result,'$ARCH',arch_str[(current_settings.fputype=fpu_fd) and
+          not (target_info.abi in [abi_riscv_ilp32f,abi_riscv_lp64f]),current_settings.cputype]);
 {$ifdef RISCV32}
       case target_info.abi of
         abi_riscv_ilp32:

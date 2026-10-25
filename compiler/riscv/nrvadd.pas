@@ -359,6 +359,9 @@ implementation
         if (nf_swapped in flags) then
           swapleftright;
 
+        if ilp32f_soft_double(left.resultdef) then
+          internalerror(2026101701);
+
         hlcg.location_force_fpureg(current_asmdata.CurrAsmList,left.location,left.resultdef,true);
         hlcg.location_force_fpureg(current_asmdata.CurrAsmList,right.location,right.resultdef,true);
 

@@ -889,6 +889,30 @@ Var
 Var
   WriteErrorsToStdErr : Boolean = True;
 
+{$ifdef CPURISCV32}
+{ libgcc soft-double entry points. A 64-bit float travels in an integer register pair. }
+function __adddf3(a,b: double): double; cdecl; external name '__adddf3';
+function __subdf3(a,b: double): double; cdecl; external name '__subdf3';
+function __muldf3(a,b: double): double; cdecl; external name '__muldf3';
+function __divdf3(a,b: double): double; cdecl; external name '__divdf3';
+function __eqdf2(a,b: double): longint; cdecl; external name '__eqdf2';
+function __nedf2(a,b: double): longint; cdecl; external name '__nedf2';
+function __ltdf2(a,b: double): longint; cdecl; external name '__ltdf2';
+function __ledf2(a,b: double): longint; cdecl; external name '__ledf2';
+function __gtdf2(a,b: double): longint; cdecl; external name '__gtdf2';
+function __gedf2(a,b: double): longint; cdecl; external name '__gedf2';
+function __extendsfdf2(a: single): double; cdecl; external name '__extendsfdf2';
+function __truncdfsf2(a: double): single; cdecl; external name '__truncdfsf2';
+function __floatsidf(i: longint): double; cdecl; external name '__floatsidf';
+function __floatunsidf(i: longword): double; cdecl; external name '__floatunsidf';
+function __floatdidf(i: int64): double; cdecl; external name '__floatdidf';
+function __floatundidf(i: qword): double; cdecl; external name '__floatundidf';
+function __fixdfsi(a: double): longint; cdecl; external name '__fixdfsi';
+function __fixunsdfsi(a: double): longword; cdecl; external name '__fixunsdfsi';
+function __fixdfdi(a: double): int64; cdecl; external name '__fixdfdi';
+function __fixunsdfdi(a: double): qword; cdecl; external name '__fixunsdfdi';
+{$endif CPURISCV32}
+
 function StackTop: Pointer;
 
 
