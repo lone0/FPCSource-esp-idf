@@ -81,6 +81,9 @@ unit cgrv;
       protected
         function  fixref(list: TAsmList; var ref: treference): boolean;
         procedure maybeadjustresult(list: TAsmList; op: topcg; size: tcgsize; dst: tregister);
+        function  ilp32f_no_d: boolean; inline;
+        procedure ilp32f_store_f32_as_double(list: TAsmList; freg: tregister; const ref: treference);
+        procedure ilp32f_load_double_as_f32(list: TAsmList; const ref: treference; freg: tregister);
       end;
 
   const
@@ -107,6 +110,46 @@ unit cgrv;
        globals,verbose,systems,cutils,
        symconst,symsym,symtable,fmodule,
        rgobj,tgobj,cpupi,procinfo,paramgr;
+
+    function tcgrv.ilp32f_no_d: boolean;
+      begin
+        result:=target_info.abi in [abi_riscv_ilp32f,abi_riscv_lp64f];
+      end;
+
+
+    procedure tcgrv.ilp32f_store_f32_as_double(list: TAsmList; freg: tregister; const ref: treference);
+      var
+        href: treference;
+      begin
+        { Single in the FPU, Double in an integer pair: libgcc extend, then two SW. }
+        if freg<>NR_FPU_RESULT_REG then
+          a_loadfpu_reg_reg(list,OS_F32,OS_F32,freg,NR_FPU_RESULT_REG);
+        a_call_name(list,'__extendsfdf2',false);
+        href:=ref;
+        a_load_reg_ref(list,OS_32,OS_32,NR_FUNCTION_RETURN64_LOW_REG,href);
+        inc(href.offset,4);
+        a_load_reg_ref(list,OS_32,OS_32,NR_FUNCTION_RETURN64_HIGH_REG,href);
+      end;
+
+
+    procedure tcgrv.ilp32f_load_double_as_f32(list: TAsmList; const ref: treference; freg: tregister);
+      var
+        href: treference;
+        lo,hi: tregister;
+      begin
+        href:=ref;
+        lo:=getintregister(list,OS_32);
+        hi:=getintregister(list,OS_32);
+        a_load_ref_reg(list,OS_32,OS_32,href,lo);
+        inc(href.offset,4);
+        a_load_ref_reg(list,OS_32,OS_32,href,hi);
+        a_load_reg_reg(list,OS_32,OS_32,lo,NR_FUNCTION_RETURN64_LOW_REG);
+        a_load_reg_reg(list,OS_32,OS_32,hi,NR_FUNCTION_RETURN64_HIGH_REG);
+        a_call_name(list,'__truncdfsf2',false);
+        if freg<>NR_FPU_RESULT_REG then
+          a_loadfpu_reg_reg(list,OS_F32,OS_F32,NR_FPU_RESULT_REG,freg);
+      end;
+
 
     function rv_fpu_slot_size: longint;
       begin
@@ -1027,6 +1070,18 @@ unit cgrv;
          (A_FCVT_S_D,A_None));
 
       begin
+        if ilp32f_no_d then
+          begin
+            { F without D: never emit D-sized FPU moves or FCVT.D*. }
+            if (fromsize<>OS_F32) or (tosize<>OS_F32) then
+              internalerror(2026102301);
+            if reg1=reg2 then
+              exit;
+            ai:=taicpu.op_reg_reg_reg(A_FSGNJ_S,reg2,reg1,reg1);
+            list.concat(ai);
+            rg[R_FPUREGISTER].add_move_instruction(ai);
+            exit;
+          end;
         if fromsize<>tosize then
           begin
             list.concat(taicpu.op_reg_reg(convOp[fromsize,tosize],reg2,reg1));
@@ -1066,6 +1121,12 @@ unit cgrv;
         else
           fixref(list,href);
 
+        if ilp32f_no_d and (fromsize<>OS_F32) then
+          begin
+            ilp32f_load_double_as_f32(list,href,reg);
+            exit;
+          end;
+
         if fromsize=OS_F32 then
           op:=A_FLW
         else if fromsize=OS_F64 then
@@ -1104,6 +1165,13 @@ unit cgrv;
             reference_reset_base(href,tmpreg,0,ctempposinvalid,0,ref.volatility);
           end;
 
+        if ilp32f_no_d and (tosize<>OS_F32) then
+          begin
+            { FPU holds Single only. An 8-byte destination is a Double pair. }
+            ilp32f_store_f32_as_double(list,reg,href);
+            exit;
+          end;
+
         if fromsize<>tosize then
           begin
             tmpreg:=getfpuregister(list,tosize);
@@ -1113,12 +1181,6 @@ unit cgrv;
 
         if tosize=OS_F32 then
           op:=A_FSW
-        else if (target_info.abi in [abi_riscv_ilp32f,abi_riscv_lp64f]) then
-          begin
-            writeln('ilp32f fpu store ', current_procinfo.procdef.procsym.name,
-              ' from ', ord(fromsize), ' to ', ord(tosize));
-            Internalerror(2026101702);
-          end
         else
           op:=A_FSD;
 

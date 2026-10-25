@@ -34,25 +34,7 @@ function fpc_setjmp(var S : jmp_buf) : longint;[Public, alias : 'FPC_SETJMP'];co
     {$endif  CPURV_HAS_16REGISTERS}
     sw sp,   jmp_buf.sp(a0)
 
-{$if defined(FPUFD) or defined(FPUD)}
-    frcsr t0
-
-    sw t0,   jmp_buf.fcsr(a0)
-
-    fsd f8,  jmp_buf.f8(a0)
-    fsd f9,  jmp_buf.f9(a0)
-    fsd f18, jmp_buf.f18(a0)
-    fsd f19, jmp_buf.f19(a0)
-    fsd f20, jmp_buf.f20(a0)
-    fsd f21, jmp_buf.f21(a0)
-    fsd f22, jmp_buf.f22(a0)
-    fsd f23, jmp_buf.f23(a0)
-    fsd f24, jmp_buf.f24(a0)
-    fsd f25, jmp_buf.f25(a0)
-    fsd f26, jmp_buf.f26(a0)
-    fsd f27, jmp_buf.f27(a0)
-{$endif FPUFD or FPUD}
-{$if defined(FPUF)}
+{$if defined(FPC_ABI_ILP32F) or defined(FPUF)}
     frcsr t0
 
     sw t0,   jmp_buf.fcsr(a0)
@@ -69,7 +51,24 @@ function fpc_setjmp(var S : jmp_buf) : longint;[Public, alias : 'FPC_SETJMP'];co
     fsw f25, jmp_buf.f25(a0)
     fsw f26, jmp_buf.f26(a0)
     fsw f27, jmp_buf.f27(a0)
-{$endif FPUF}
+{$elseif defined(FPUFD) or defined(FPUD)}
+    frcsr t0
+
+    sw t0,   jmp_buf.fcsr(a0)
+
+    fsd f8,  jmp_buf.f8(a0)
+    fsd f9,  jmp_buf.f9(a0)
+    fsd f18, jmp_buf.f18(a0)
+    fsd f19, jmp_buf.f19(a0)
+    fsd f20, jmp_buf.f20(a0)
+    fsd f21, jmp_buf.f21(a0)
+    fsd f22, jmp_buf.f22(a0)
+    fsd f23, jmp_buf.f23(a0)
+    fsd f24, jmp_buf.f24(a0)
+    fsd f25, jmp_buf.f25(a0)
+    fsd f26, jmp_buf.f26(a0)
+    fsd f27, jmp_buf.f27(a0)
+{$endif}
 
     addi x10, x0, 0
 end;
@@ -93,25 +92,7 @@ procedure fpc_longjmp(var S : jmp_buf;value : longint);[Public, alias : 'FPC_LON
     lw s11, jmp_buf.s11(a0)
     {$endif  CPURV_HAS_16REGISTERS}
 
-{$if defined(FPUFD) or defined(FPUD)}
-    lw sp,   jmp_buf.fcsr(a0)
-
-    fld f8,  jmp_buf.f8(a0)
-    fld f9,  jmp_buf.f9(a0)
-    fld f18, jmp_buf.f18(a0)
-    fld f19, jmp_buf.f19(a0)
-    fld f20, jmp_buf.f20(a0)
-    fld f21, jmp_buf.f21(a0)
-    fld f22, jmp_buf.f22(a0)
-    fld f23, jmp_buf.f23(a0)
-    fld f24, jmp_buf.f24(a0)
-    fld f25, jmp_buf.f25(a0)
-    fld f26, jmp_buf.f26(a0)
-    fld f27, jmp_buf.f27(a0)
-
-    fscsr sp
-{$endif FPUFD or FPUD}
-{$if defined(FPUF)}
+{$if defined(FPC_ABI_ILP32F) or defined(FPUF)}
     lw sp,   jmp_buf.fcsr(a0)
 
     flw f8,  jmp_buf.f8(a0)
@@ -128,7 +109,24 @@ procedure fpc_longjmp(var S : jmp_buf;value : longint);[Public, alias : 'FPC_LON
     flw f27, jmp_buf.f27(a0)
 
     fscsr sp
-{$endif FPUF}
+{$elseif defined(FPUFD) or defined(FPUD)}
+    lw sp,   jmp_buf.fcsr(a0)
+
+    fld f8,  jmp_buf.f8(a0)
+    fld f9,  jmp_buf.f9(a0)
+    fld f18, jmp_buf.f18(a0)
+    fld f19, jmp_buf.f19(a0)
+    fld f20, jmp_buf.f20(a0)
+    fld f21, jmp_buf.f21(a0)
+    fld f22, jmp_buf.f22(a0)
+    fld f23, jmp_buf.f23(a0)
+    fld f24, jmp_buf.f24(a0)
+    fld f25, jmp_buf.f25(a0)
+    fld f26, jmp_buf.f26(a0)
+    fld f27, jmp_buf.f27(a0)
+
+    fscsr sp
+{$endif}
     lw sp, jmp_buf.sp(a0)
 
     beq a1, x0, .Lone

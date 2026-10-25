@@ -62,7 +62,7 @@ interface
 implementation
 
     uses
-      cutils,globals,verbose,globtype,
+      cutils,globals,verbose,globtype,systems,
       compinnr,
       aasmtai,aasmdata,aasmcpu,
       symconst,symdef,
@@ -145,7 +145,13 @@ implementation
 
      function trvinlinenode.first_abs_real : tnode;
        begin
-         if (current_settings.fputype >= fpu_fd) and is_single(resultdef) then
+         if ilp32f_soft_double(resultdef) then
+           begin
+             { Double lives in an integer pair; abs is AND of the high word. }
+             expectloc:=LOC_REGISTER;
+             first_abs_real := nil;
+           end
+         else if (current_settings.fputype >= fpu_fd) and is_single(resultdef) then
            begin
              expectloc:=LOC_FPUREGISTER;
              first_abs_real := nil;
@@ -244,6 +250,7 @@ implementation
       begin
         location.loc:=LOC_FPUREGISTER;
         load_fpu_location;
+        { ILP32F Double never reaches here (first_sqrt_real uses a helper). }
         case left.location.size of
           OS_F32:
             begin
@@ -256,7 +263,7 @@ implementation
               current_asmdata.CurrAsmList.concat(taicpu.op_reg_reg(A_FSQRT_D,location.register,
                 left.location.register));
               cg.maybe_check_for_fpu_exception(current_asmdata.CurrAsmList);
-             end
+            end
           else
             inherited;
         end;
@@ -264,30 +271,37 @@ implementation
 
 
      procedure trvinlinenode.second_abs_real;
-       var
-         op: TAsmOp;
        begin
+         if ilp32f_soft_double(left.resultdef) or ilp32f_soft_double(resultdef) then
+           begin
+             secondpass(left);
+             if not(left.location.loc in [LOC_CREGISTER,LOC_REGISTER]) then
+               hlcg.location_force_reg(current_asmdata.CurrAsmList,left.location,left.resultdef,left.resultdef,false);
+             location_reset(location,LOC_REGISTER,OS_64);
+             location.register64.reglo:=cg.getintregister(current_asmdata.CurrAsmList,OS_32);
+             location.register64.reghi:=cg.getintregister(current_asmdata.CurrAsmList,OS_32);
+             cg.a_op_const_reg_reg(current_asmdata.CurrAsmList,OP_AND,OS_32,tcgint($7fffffff),left.location.registerhi,location.registerhi);
+             cg.a_load_reg_reg(current_asmdata.CurrAsmList,OS_32,OS_32,left.location.register64.reglo,location.register64.reglo);
+             exit;
+           end;
          location.loc:=LOC_FPUREGISTER;
          load_fpu_location;
-         if (left.location.size = OS_F32) then
-           op := A_FSGNJX_S
+         if left.location.size=OS_F32 then
+           current_asmdata.CurrAsmList.concat(taicpu.op_reg_reg_reg(A_FSGNJX_S,location.register,left.location.register,left.location.register))
          else
-           op := A_FSGNJX_D;
-         current_asmdata.CurrAsmList.concat(taicpu.op_reg_reg_reg(op,location.register,left.location.register,left.location.register));
+           current_asmdata.CurrAsmList.concat(taicpu.op_reg_reg_reg(A_FSGNJX_D,location.register,left.location.register,left.location.register));
        end;
 
 
      procedure trvinlinenode.second_sqr_real;
-       var
-         op: tasmop;
        begin
          location.loc:=LOC_FPUREGISTER;
          load_fpu_location;
-         if (left.location.size = OS_F32) then
-           op := A_FMUL_S
+         { ILP32F Double never reaches here (first_sqr_real uses a helper). }
+         if left.location.size=OS_F32 then
+           current_asmdata.CurrAsmList.concat(taicpu.op_reg_reg_reg(A_FMUL_S,location.register,left.location.register,left.location.register))
          else
-           op := A_FMUL_D;
-         current_asmdata.CurrAsmList.concat(taicpu.op_reg_reg_reg(op,location.register,left.location.register,left.location.register));
+           current_asmdata.CurrAsmList.concat(taicpu.op_reg_reg_reg(A_FMUL_D,location.register,left.location.register,left.location.register));
          cg.maybe_check_for_fpu_exception(current_asmdata.CurrAsmList);
        end;
 
@@ -314,12 +328,10 @@ implementation
            integer using current rounding mode") }
 
 {$ifdef RISCV32}
-         if (left.location.size = OS_F32) then
-           op := A_FCVT_W_S
-         else
-           op := A_FCVT_W_D;
+         op := A_FCVT_W_S;
 {$else}
-         if (left.location.size = OS_F32) then
+         if (left.location.size = OS_F32) or
+            (target_info.abi in [abi_riscv_ilp32f,abi_riscv_lp64f]) then
            op := A_FCVT_L_S
          else
            op := A_FCVT_L_D;
@@ -352,12 +364,10 @@ implementation
            integer using current rounding mode") }
 
 {$ifdef RISCV32}
-         if (left.location.size = OS_F32) then
-           op := A_FCVT_W_S
-         else
-           op := A_FCVT_W_D;
+         op := A_FCVT_W_S;
 {$else}
-         if (left.location.size = OS_F32) then
+         if (left.location.size = OS_F32) or
+            (target_info.abi in [abi_riscv_ilp32f,abi_riscv_lp64f]) then
            op := A_FCVT_L_S
          else
            op := A_FCVT_L_D;
