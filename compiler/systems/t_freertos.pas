@@ -1693,10 +1693,17 @@ begin
       if current_settings.controllertype=ct_esp32s31 then
         if idf_version>=60100 then
           begin
+            { Match IDF 6.1 picolibc S31 link scripts (idf-s31 hello_world LINK_FLAGS).
+              Do not pull rom.newlib.ld / rom.newlib-nano.ld: those map printf/fflush
+              onto ROM newlib-nano, which aborts on picolibc FILE objects.
+              Do not pull rom.libgcc.ld: S31 uses RVFPLIB (rom.rvfp.ld). }
+            Info.ExeCmd[1]:=Info.ExeCmd[1]+' -u esp_coex_init_include_func -u esp_security_init_include_impl';
+            Info.ExeCmd[1]:=Info.ExeCmd[1]+' -u esp_vfs_include_nullfs_register -u mbedtls_psa_crypto_init_include_impl';
+            Info.ExeCmd[1]:=Info.ExeCmd[1]+' -u include_esp_phy_override';
             Info.ExeCmd[1]:=Info.ExeCmd[1]+' -L $IDF_PATH/components/heap/port/'+cntrlr+'/ld';
-            Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T '+cntrlr+'.rom.libgcc.ld -T '+cntrlr+'.rom.rvfp.ld -T '+cntrlr+'.rom.libc.ld -T '+cntrlr+'.rom.newlib.ld -T '+cntrlr+'.rom.version.ld -T '+cntrlr+'.rom.newlib-nano.ld';
+            Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T '+cntrlr+'.rom.rvfp.ld -T '+cntrlr+'.rom.version.ld';
             Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T '+cntrlr+'.rom.phy.ld -T '+cntrlr+'.rom.coexist.ld -T '+cntrlr+'.rom.net80211.ld -T '+cntrlr+'.rom.pp.ld';
-            Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T '+cntrlr+'.rom.spiflash.ld -T '+cntrlr+'.rom.heap.ld';
+            Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T '+cntrlr+'.rom.libc.ld -T '+cntrlr+'.rom.heap.ld';
             Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T $IDF_PATH/components/esp_hal_wdt/'+cntrlr+'/rom.wdt.ld';
             Info.ExeCmd[1]:=Info.ExeCmd[1]+' -T $IDF_PATH/components/esp_hal_systimer/'+cntrlr+'/rom.systimer.ld';
           end

@@ -21,16 +21,15 @@ type
     ,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11
     {$endif CPURV_HAS_16REGISTERS}
     ,sp: dword;
-{$if defined(FPUFD) or defined(FPUD)}
-    fcsr,dummy : dword;
-    f8,f9,f18,f19,f20,f21,
-    f22,f23,f24,f25,f26,f27: qword;
-{$endif FPUFD or FPUD}
-{$if defined(FPUF)}
+{$if defined(FPC_ABI_ILP32F) or defined(FPUF)}
     fcsr : dword;
     f8,f9,f18,f19,f20,f21,
     f22,f23,f24,f25,f26,f27: longword;
-{$endif FPUF}
+{$elseif defined(FPUFD) or defined(FPUD)}
+    fcsr,dummy : dword;
+    f8,f9,f18,f19,f20,f21,
+    f22,f23,f24,f25,f26,f27: qword;
+{$endif}
    end;
    pjmp_buf = ^jmp_buf;
 
