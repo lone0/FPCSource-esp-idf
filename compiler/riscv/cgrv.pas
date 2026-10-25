@@ -108,6 +108,30 @@ unit cgrv;
        symconst,symsym,symtable,fmodule,
        rgobj,tgobj,cpupi,procinfo,paramgr;
 
+    function rv_fpu_slot_size: longint;
+      begin
+        if target_info.abi in [abi_riscv_ilp32f,abi_riscv_lp64f] then
+          result:=4
+        else
+          result:=8;
+      end;
+
+    function rv_fpu_store: TAsmOp;
+      begin
+        if target_info.abi in [abi_riscv_ilp32f,abi_riscv_lp64f] then
+          result:=A_FSW
+        else
+          result:=A_FSD;
+      end;
+
+    function rv_fpu_load: TAsmOp;
+      begin
+        if target_info.abi in [abi_riscv_ilp32f,abi_riscv_lp64f] then
+          result:=A_FLW
+        else
+          result:=A_FLD;
+      end;
+
 {$ifdef extdebug}
      function ref2string(const ref : treference) : string;
        begin
@@ -690,7 +714,7 @@ unit cgrv;
             fregs:=rg[R_FPUREGISTER].used_in_proc-paramanager.get_volatile_registers_fpu(pocall_stdcall);
             for r:=RS_F0 to RS_F31 do
               if r in fregs then
-                inc(stackcount,8);
+                inc(stackcount,rv_fpu_slot_size);
 
             inc(localsize,stackcount);
             if not is_imm12(-localsize) then
@@ -723,8 +747,8 @@ unit cgrv;
             for r:=RS_F0 to RS_F31 do
               if r in fregs then
                 begin
-                  dec(href.offset,8);
-                  list.concat(taicpu.op_reg_ref(A_FSD,newreg(R_FPUREGISTER,r,R_SUBWHOLE),href));
+                  dec(href.offset,rv_fpu_slot_size);
+                  list.concat(taicpu.op_reg_ref(rv_fpu_store,newreg(R_FPUREGISTER,r,R_SUBWHOLE),href));
                 end;
 
             if current_procinfo.framepointer<>NR_STACK_POINTER_REG then
@@ -778,7 +802,7 @@ unit cgrv;
             fregs:=rg[R_FPUREGISTER].used_in_proc-paramanager.get_volatile_registers_fpu(pocall_stdcall);
             for r:=RS_F0 to RS_F31 do
               if r in fregs then
-                inc(stacksize,8);
+                inc(stacksize,rv_fpu_slot_size);
 
             localsize:=current_procinfo.calc_stackframe_size+stacksize;
             if localsize>0 then
@@ -825,8 +849,8 @@ unit cgrv;
             for r:=RS_F31 downto RS_F0 do
               if r in fregs then
                 begin
-                  list.concat(taicpu.op_reg_ref(A_FLD,newreg(R_FPUREGISTER,r,R_SUBWHOLE),href));
-                  inc(href.offset,8);
+                  list.concat(taicpu.op_reg_ref(rv_fpu_load,newreg(R_FPUREGISTER,r,R_SUBWHOLE),href));
+                  inc(href.offset,rv_fpu_slot_size);
                 end;
 
             for r:=RS_X31 downto RS_X0 do
@@ -1089,6 +1113,12 @@ unit cgrv;
 
         if tosize=OS_F32 then
           op:=A_FSW
+        else if (target_info.abi in [abi_riscv_ilp32f,abi_riscv_lp64f]) then
+          begin
+            writeln('ilp32f fpu store ', current_procinfo.procdef.procsym.name,
+              ' from ', ord(fromsize), ' to ', ord(tosize));
+            Internalerror(2026101702);
+          end
         else
           op:=A_FSD;
 

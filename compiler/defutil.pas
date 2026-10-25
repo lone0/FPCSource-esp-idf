@@ -254,6 +254,9 @@ interface
     {# Returns true, if def is a double type }
     function is_double(def : tdef) : boolean;
 
+    {# True for a double that the ilp32f/lp64f ABI keeps in integer registers }
+    function ilp32f_soft_double(def : tdef) : boolean;
+
     {# Returns true, if def is an extended type }
     function is_extended(def : tdef) : boolean;
 
@@ -429,7 +432,7 @@ interface
 implementation
 
     uses
-       verbose,cutils,
+       verbose,cutils,systems,
        symtable, // search_system_type
        symsym,
        cpuinfo;
@@ -482,6 +485,14 @@ implementation
       begin
         result:=(def.typ=floatdef) and
           (tfloatdef(def).floattype=s64real);
+      end;
+
+
+    function ilp32f_soft_double(def : tdef) : boolean;
+      begin
+        result:=(def.typ=floatdef) and
+          (tfloatdef(def).floattype=s64real) and
+          (target_info.abi in [abi_riscv_ilp32f,abi_riscv_lp64f]);
       end;
 
 
@@ -1770,6 +1781,7 @@ implementation
               or not(tfloatdef(def).floattype=s32real)
               or not(FPUXTENSA_SINGLE in fpu_capabilities[current_settings.fputype])
 {$endif xtensa}
+              or ilp32f_soft_double(def)
               then
               result:=int_cgsize(def.size)
             else

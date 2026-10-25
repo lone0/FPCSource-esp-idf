@@ -990,7 +990,8 @@ implementation
           floatdef:
             if use_vectorfpu(def) then
               result:=R_MMREGISTER
-            else if cs_fp_emulation in current_settings.moduleswitches then
+            else if (cs_fp_emulation in current_settings.moduleswitches) or
+                    ilp32f_soft_double(def) then
               result:=R_INTREGISTER
             else
               result:=R_FPUREGISTER;
@@ -5693,12 +5694,17 @@ implementation
       { Handle Floating point types differently
 
         This doesn't depend on emulator settings, emulator settings should
-        be handled by cpupara }
-      if (vardef.typ=floatdef) or
+        be handled by cpupara. ilp32f doubles are an integer pair, so they
+        take the integer path below, which can split one value across two
+        registers. }
+      if ((vardef.typ=floatdef) or
          { some ABIs return certain records in an fpu register }
          (l.loc in [LOC_FPUREGISTER,LOC_CFPUREGISTER]) or
          (assigned(cgpara.location) and
-          (cgpara.Location^.loc in [LOC_FPUREGISTER,LOC_CFPUREGISTER])) then
+          (cgpara.Location^.loc in [LOC_FPUREGISTER,LOC_CFPUREGISTER]))) and
+         not (ilp32f_soft_double(vardef) and
+              assigned(cgpara.location) and
+              (cgpara.location^.loc in [LOC_REGISTER,LOC_CREGISTER,LOC_REFERENCE,LOC_CREFERENCE])) then
         begin
           gen_loadfpu_loc_cgpara(list,vardef,l,cgpara,vardef.size);
           exit;

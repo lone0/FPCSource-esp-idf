@@ -426,7 +426,8 @@ implementation
       begin
         l.size:=def_cgsize(def);
         if (def.typ=floatdef) and
-           not(cs_fp_emulation in current_settings.moduleswitches) then
+           not(cs_fp_emulation in current_settings.moduleswitches) and
+           not ilp32f_soft_double(def) then
           begin
             if use_vectorfpu(def) then
               begin

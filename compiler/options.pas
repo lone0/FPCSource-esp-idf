@@ -5386,9 +5386,22 @@ begin
      or (init_settings.fputype=fpu_soft)
   then
     begin
-      include(init_settings.moduleswitches,cs_fp_emulation);
-      { cs_fp_emulation and fpu_soft are equal on arm and m68k }
-      init_settings.fputype:=fpu_soft;
+{$ifdef RISCV32}
+      { F without D selects ILP32F. 64-bit float does not use D opcodes. }
+      if (CPURV_HAS_F in cpu_capabilities[init_settings.cputype]) and
+         not (CPURV_HAS_D in cpu_capabilities[init_settings.cputype]) then
+        begin
+          target_info.abi:=abi_riscv_ilp32f;
+          init_settings.fputype:=fpu_fd;
+          exclude(init_settings.moduleswitches,cs_fp_emulation);
+        end
+      else
+{$endif RISCV32}
+        begin
+          include(init_settings.moduleswitches,cs_fp_emulation);
+          { cs_fp_emulation and fpu_soft are equal on arm and m68k }
+          init_settings.fputype:=fpu_soft;
+        end;
     end;
 {$endif cpufpemu}
 
@@ -5575,6 +5588,7 @@ begin
                 StopOptions(1);
               end;
           end;
+        exclude(init_settings.moduleswitches,cs_fp_emulation);
       end;
     abi_riscv_ilp32d:
       begin
@@ -5659,8 +5673,11 @@ begin
       ;
   end;
 
-  { check if the fpu type requires the F and D extension }
-  if (init_settings.fputype in [fpu_fd]) and not((cpu_capabilities[init_settings.cputype]*[CPURV_HAS_F,CPURV_HAS_D])=[CPURV_HAS_F,CPURV_HAS_D]) then
+  { check if the fpu type requires the F and D extension.
+    ilp32f/lp64f keep the internal fpu_fd tag but never emit D opcodes. }
+  if (init_settings.fputype in [fpu_fd]) and
+     not (target_info.abi in [abi_riscv_ilp32f,abi_riscv_lp64f]) and
+     not((cpu_capabilities[init_settings.cputype]*[CPURV_HAS_F,CPURV_HAS_D])=[CPURV_HAS_F,CPURV_HAS_D]) then
     Message2(option_unsupported_fpu,fputypestr[init_settings.fputype],cputypestr[init_settings.cputype]);
 {$endif defined(riscv32) or defined(riscv64)}
 

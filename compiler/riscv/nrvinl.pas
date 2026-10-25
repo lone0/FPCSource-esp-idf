@@ -62,13 +62,12 @@ interface
 implementation
 
     uses
-      ncal,
       cutils,globals,verbose,globtype,
       compinnr,
       aasmtai,aasmdata,aasmcpu,
       symconst,symdef,
       defutil,
-      procinfo,
+      procinfo,ncal,
       cgbase,pass_2,
       cpuinfo,ncgutil,
       hlcgobj,cgutils,cgobj,rgobj,tgobj;
@@ -77,6 +76,16 @@ implementation
 {*****************************************************************************
                               trvinlinenode
 *****************************************************************************}
+
+     function inline_arg_is_single(n: tnode): boolean;
+       begin
+         if n.nodetype=callparan then
+           n:=tcallparanode(n).left;
+         result:=assigned(n) and assigned(n.resultdef) and is_single(n.resultdef);
+       end;
+
+
+
 
      function trvinlinenode.pass_typecheck_cpu: tnode;
        begin
@@ -122,7 +131,7 @@ implementation
 
      function trvinlinenode.first_sqrt_real : tnode;
        begin
-         if (current_settings.fputype >= fpu_fd) then
+         if (current_settings.fputype >= fpu_fd) and is_single(resultdef) then
            begin
              expectloc:=LOC_FPUREGISTER;
              first_sqrt_real := nil;
@@ -136,7 +145,7 @@ implementation
 
      function trvinlinenode.first_abs_real : tnode;
        begin
-         if (current_settings.fputype >= fpu_fd) then
+         if (current_settings.fputype >= fpu_fd) and is_single(resultdef) then
            begin
              expectloc:=LOC_FPUREGISTER;
              first_abs_real := nil;
@@ -148,7 +157,7 @@ implementation
 
      function trvinlinenode.first_sqr_real : tnode;
        begin
-         if (current_settings.fputype >= fpu_fd) then
+         if (current_settings.fputype >= fpu_fd) and is_single(resultdef) then
            begin
              expectloc:=LOC_FPUREGISTER;
              first_sqr_real := nil;
@@ -165,6 +174,7 @@ implementation
          if
 {$ifdef RISCV32}
            is_32bitint(resultdef) and
+           inline_arg_is_single(left) and
 {$endif RISCV32}
            (current_settings.fputype >= fpu_fd) then
            begin
@@ -183,6 +193,7 @@ implementation
          if
 {$ifdef RISCV32}
            is_32bitint(resultdef) and
+           inline_arg_is_single(left) and
 {$endif RISCV32}
            (current_settings.fputype >= fpu_fd) then
            begin

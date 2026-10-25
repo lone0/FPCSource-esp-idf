@@ -37,6 +37,7 @@ interface
          { procedure second_string_to_chararray;override; }
          { procedure second_array_to_pointer;override; }
           function first_int_to_real: tnode; override;
+          function first_real_to_real: tnode; override;
          { procedure second_pointer_to_array;override; }
          { procedure second_chararray_to_string;override; }
          { procedure second_char_to_string;override; }
@@ -70,10 +71,63 @@ implementation
                              FirstTypeConv
 *****************************************************************************}
 
+    function trv32typeconvnode.first_real_to_real: tnode;
+      var
+        fname: string[31];
+      begin
+        if target_info.abi<>abi_riscv_ilp32f then
+          exit(inherited first_real_to_real);
+        if tfloatdef(left.resultdef).floattype=tfloatdef(resultdef).floattype then
+          begin
+            result:=left;
+            left:=nil;
+            exit;
+          end;
+        if is_single(left.resultdef) and is_double(resultdef) then
+          fname:='__EXTENDSFDF2'
+        else if is_double(left.resultdef) and is_single(resultdef) then
+          fname:='__TRUNCDFSF2'
+        else
+          internalerror(2026101703);
+        result:=ccallnode.createintern(fname,ccallparanode.create(left,nil));
+        left:=nil;
+        firstpass(result);
+      end;
+
+
     function trv32typeconvnode.first_int_to_real: tnode;
       var
-        fname: string[19];
+        fname: string[31];
       begin
+        if (target_info.abi=abi_riscv_ilp32f) and is_double(resultdef) then
+          begin
+            if is_64bitint(left.resultdef) or is_currency(left.resultdef) then
+              begin
+                if is_currency(left.resultdef) then
+                  left.resultdef:=s64inttype;
+                if is_signed(left.resultdef) then
+                  fname:='__FLOATDIDF'
+                else
+                  fname:='__FLOATUNDIDF';
+              end
+            else
+              begin
+                if is_signed(left.resultdef) then
+                  begin
+                    inserttypeconv(left,s32inttype);
+                    fname:='__FLOATSIDF';
+                  end
+                else
+                  begin
+                    inserttypeconv(left,u32inttype);
+                    fname:='__FLOATUNSIDF';
+                  end;
+              end;
+            result:=ccallnode.createintern(fname,ccallparanode.create(left,nil));
+            left:=nil;
+            firstpass(result);
+            exit;
+          end;
         if (cs_fp_emulation in current_settings.moduleswitches) then
           result:=inherited first_int_to_real
         { converting a 64bit integer to a float requires a helper }

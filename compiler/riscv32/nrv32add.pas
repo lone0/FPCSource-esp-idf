@@ -36,6 +36,7 @@ unit nrv32add;
         procedure cmp64_lt(left_reg, right_reg: TRegister64; unsigned: boolean);
       protected
         function use_generic_mul32to64: boolean; override;
+        function first_addfloat: tnode; override;
 
         procedure second_cmp64bit; override;
       end;
@@ -43,11 +44,12 @@ unit nrv32add;
   implementation
 
     uses
-      systems,
+      globtype,systems,constexp,
       cutils,verbose,
       paramgr,procinfo,
       aasmtai,aasmdata,aasmcpu,defutil,
-      cgcpu,cgutils,nadd,
+      ncal,nadd,ncnv,symconst,symdef,
+      cgcpu,cgutils,
       cpupara,
       ncon,nset,
       hlcgobj, ncgutil,cgobj;
@@ -71,6 +73,44 @@ unit nrv32add;
         cg.a_cmp_reg_reg_label(current_asmdata.CurrAsmList,OS_INT,OC_B,left_reg.reglo,right_reg.reglo,location.falselabel);
         cg.a_jmp_always(current_asmdata.CurrAsmList,location.truelabel);
       end;
+
+    function trv32addnode.first_addfloat: tnode;
+      var
+        procname: string[31];
+        calln: tnode;
+      begin
+        if (target_info.abi<>abi_riscv_ilp32f) or
+           not (is_double(resultdef) or is_double(left.resultdef) or
+                (assigned(right) and is_double(right.resultdef))) then
+          exit(inherited first_addfloat);
+        if not is_double(left.resultdef) then
+          inserttypeconv(left,s64floattype);
+        if assigned(right) and not is_double(right.resultdef) then
+          inserttypeconv(right,s64floattype);
+
+        case nodetype of
+          addn: procname:='__ADDDF3';
+          subn: procname:='__SUBDF3';
+          muln: procname:='__MULDF3';
+          slashn: procname:='__DIVDF3';
+          equaln: procname:='__EQDF2';
+          unequaln: procname:='__NEDF2';
+          ltn: procname:='__LTDF2';
+          lten: procname:='__LEDF2';
+          gtn: procname:='__GTDF2';
+          gten: procname:='__GEDF2';
+          else
+            internalerror(2026101704);
+        end;
+        calln:=ccallnode.createintern(procname,ccallparanode.create(right,ccallparanode.create(left,nil)));
+        left:=nil;
+        right:=nil;
+        if nodetype in [addn,subn,muln,slashn] then
+          result:=calln
+        else
+          result:=caddnode.create(nodetype,calln,cordconstnode.create(int64(0),s32inttype,false));
+      end;
+
 
     function trv32addnode.use_generic_mul32to64: boolean;
       begin

@@ -104,7 +104,10 @@ unit cpupi;
               regs:=cg.rg[R_FPUREGISTER].used_in_proc-paramanager.get_volatile_registers_fpu(pocall_stdcall);
               for r:=RS_F0 to RS_F31 do
                 if r in regs then
-                  inc(floatsavesize,8);
+                  if target_info.abi in [abi_riscv_ilp32f,abi_riscv_lp64f] then
+                    inc(floatsavesize,4)
+                  else
+                    inc(floatsavesize,8);
             end;
           else
             ;
