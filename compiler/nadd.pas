@@ -2040,7 +2040,10 @@ const
                (nodetype=muln) and
                is_real(ld) and is_real(rd) and
                left.isequal(right) and
-               not(might_have_sideeffects(left)) then
+               not(might_have_sideeffects(left)) and
+               { ILP32F stores a double in an integer pair. sqr() would call
+                 fpc_sqr_real, whose body is d*d, and that rewrite loops. }
+               not ilp32f_soft_double(ld) then
               begin
                 result:=cinlinenode.create(in_sqr_real,false,PruneKeepLeft());
                 inserttypeconv(result,resultdef);
