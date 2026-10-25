@@ -868,6 +868,12 @@ implementation
                 and not((FPUXTENSA_SINGLE in fpu_capabilities[current_settings.fputype]) xor
                   (FPUXTENSA_DOUBLE in fpu_capabilities[current_settings.fputype]))
 {$endif}
+                { ILP32F keeps Single in an F register and Double in an integer
+                  pair. A width change has to go through the convert helpers. }
+                and not(
+                  (ilp32f_soft_double(left.resultdef) or ilp32f_soft_double(right.resultdef)) and
+                  (tfloatdef(left.resultdef).floattype<>tfloatdef(right.resultdef).floattype)
+                )
         then
           begin
             if not(nf_internal in flags) then
