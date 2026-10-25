@@ -247,6 +247,17 @@ Guru. Sort on tiny `-Ch8192` remains a separate heap-size issue.
 5. DONE marker **and** no Guru/abort?
 6. No D-extension opcodes on Double paths?
 7. `ppcrv32` rebuilt after any `nrv32util.pas` finalize-order change?
+8. After a change to the ILP32F float assignment or `x*x` rewrite (§5.8), rebuild the cross compiler and the riscv32-freertos RTL. `fpc_sqr_real` is part of the system unit.
+
+## 5.8 Single FPU, soft double
+
+On ILP32F, Pascal `Real`, `ValReal`, best-real, and `Extended` are double, as on Xtensa. The FPU is single-precision. A 32-bit float lives in an F register. A 64-bit float is an integer pair and uses libgcc or ROM RVFPLIB (`__adddf3`, `__muldf3`, `__extendsfdf2`, `__truncdfsf2`, and the rest of that set). The compiler sets `fputype` to `fpu_fd` so shared RISC-V code can name those operations. `ilp32f_soft_double` is true for an s64real on the ILP32F or LP64F ABI, and that predicate suppresses D opcodes. It is false on Xtensa.
+
+Xtensa has no double FPU in this tree either. `fpu_hard` is `[FPUXTENSA_SINGLE]`. `FPUXTENSA_DOUBLE` is declared and unset. `fpu_fd` on ILP32F means the soft-double helpers are selected, which is a different fact from a hardware double FPU.
+
+`compiler/nld.pas` sends a width-changing float assignment through the convert helpers when either side is `ilp32f_soft_double`. Delphi excess precision promotes unary minus of a single to double and then stores it back. A direct store of that integer pair into a single slot raises `internalerror 2002090904`. The helpers are `__extendsfdf2` and `__truncdfsf2`. A same-width double assignment stays a pair move. Xtensa already takes the convert path when only `FPUXTENSA_SINGLE` is set.
+
+`compiler/nadd.pas` leaves `x*x` as a multiply when the operand is a soft double. `fpc_sqr_real` is `result := d*d`, so rewriting that body to `sqr` tail-calls itself and never returns. The multiply stays `__muldf3`. A single `x*x` still becomes `sqr` and uses `FMUL.S`. Xtensa skips the rewrite for every real width, because its condition requires `FPUXTENSA_DOUBLE`. `fpc_sqr_real` is compiled into the system unit, so this change needs a riscv32-freertos RTL rebuild as well as a new cross compiler.
 
 ## 6. Where detail lives
 
