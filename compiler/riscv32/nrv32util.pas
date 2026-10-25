@@ -107,10 +107,18 @@ implementation
       for i:=0 to entries.count-1 do
         begin
           entry:=pinitfinalentry(entries[i]);
-          if entry^.finifunc<>'' then
-            finalList.Concat(taicpu.op_sym(A_CALL,current_asmdata.RefAsmSymbol(entry^.finifunc,AT_FUNCTION)));
           if entry^.initfunc<>'' then
             initList.Concat(taicpu.op_sym(A_CALL,current_asmdata.RefAsmSymbol(entry^.initfunc,AT_FUNCTION)));
+        end;
+      { Unit finalization must run in REVERSE init order (FPC contract:
+        last-initialized unit first). Iterating forward made e.g. SysUtils'
+        TEncoding class destructor free the standard encodings before the
+        Classes unit's finalization dereferenced them. }
+      for i:=entries.count-1 downto 0 do
+        begin
+          entry:=pinitfinalentry(entries[i]);
+          if entry^.finifunc<>'' then
+            finalList.Concat(taicpu.op_sym(A_CALL,current_asmdata.RefAsmSymbol(entry^.finifunc,AT_FUNCTION)));
         end;
 
       genexit(initList);
