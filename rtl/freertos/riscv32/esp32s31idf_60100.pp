@@ -19,31 +19,30 @@ unit esp32s31idf_60100;
 
 interface
 
-{ Aligned with espidf_50200 / espidf_60100, using IDF v6.1 library names.
-  Xtensa-only libs are riscv instead of xt_hal/xtensa. Extra linklibs match
-  the 6.1 hello_world / SPIRAM set on a dual-core USB-JTAG S31. }
+{ Minimal closure for the ESP32-S31 on IDF v6.1, derived like the xtensa
+  espidf_60100 set: member-level archive closure over the undefined symbols
+  of every installed RTL+packages object plus the -u anchors the linker
+  driver emits for this controller. SDK-config-dependent archives are absent
+  by design (this closure is against a SPIRAM-less, coredump-less project):
+  SPIRAM builds additionally need libesp_psram.a, coredump builds need
+  libespcoredump.a -- programs declare such extras in their own units
+  (idfheap pattern) or pass -k. }
 
 {$linklib app_update,static}
 {$linklib bootloader_support,static}
-{$linklib esp_bootloader_format,static}
 //{$linklib core,static}
-{$linklib coexist,static}
-{$linklib cxx,static}
-{$linklib driver,static}
 {$linklib esp_driver_dma,static}
 {$linklib esp_driver_gpio,static}
 {$linklib esp_driver_uart,static}
 {$linklib esp_driver_usb_serial_jtag,static}
 {$linklib efuse,static}
 {$linklib esp_app_format,static}
-{$linklib esp_coex,static}
 {$linklib esp_common,static}
 {$linklib esp_hw_support,static}
 {$linklib esp_mm,static}
 {$linklib esp_partition,static}
 {$linklib esp_phy,static}
 //{$linklib esp_pm,static}
-{$linklib esp_psram,static}
 {$linklib esp_ringbuf,static}
 {$linklib esp_rom,static}
 {$linklib esp_stdio,static}
@@ -61,16 +60,13 @@ interface
 {$linklib esp_hal_regi2c,static}
 {$linklib esp_hal_security,static}
 {$linklib esp_hal_systimer,static}
-{$linklib esp_hal_timg,static}
 {$linklib esp_hal_touch_sens,static}
 {$linklib esp_hal_uart,static}
-{$linklib esp_hal_usb,static}
 {$linklib esp_hal_wdt,static}
 {$linklib heap,static}
 {$linklib log,static}
 {$linklib mbedcrypto,static}
 {$linklib mbedtls,static}
-{$linklib tfpsacrypto,static}
 {$linklib esp_security,static}
 {$linklib esp_libc,static}
 {$linklib pthread,static}
@@ -82,8 +78,6 @@ interface
 {$linklib c,static}
 {$linklib m,static}
 {$linklib gcc,static}
-{$linklib esp_gdbstub,static}
-{$linklib espcoredump,static}
 
 implementation
 
