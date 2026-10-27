@@ -20,22 +20,22 @@ unit espidf_60100;
 interface
 
 { Aligned with espidf_50200, using IDF v6.1 library names.
-  Extra linklibs are only those hello_world.pas / this SPIRAM image need. }
+  Minimal closure: every entry below is pulled by the linked test programs
+  (console/heap/sysutils/classes/math sample). Archives never pulled by any
+  of them are deliberately absent -- SDK projects that skip their components
+  (e.g. wifi-less hello_world) then still satisfy this list. Programs that
+  use further IDF libraries declare their own {$linklib} in application
+  units, exactly like idfheap does for esp_psram. }
 
 {$linklib app_update,static}
 {$linklib bootloader_support,static}
-{$linklib esp_bootloader_format,static}
 //{$linklib core,static}
-{$linklib coexist,static}
-{$linklib cxx,static}
-{$linklib driver,static}
 {$linklib esp_driver_dma,static}
 {$linklib esp_driver_gpio,static}
 {$linklib esp_driver_uart,static}
 {$linklib esp_driver_usb_serial_jtag,static}
 {$linklib efuse,static}
 {$linklib esp_app_format,static}
-{$linklib esp_coex,static}
 {$linklib esp_common,static}
 {$linklib esp_hw_support,static}
 {$linklib esp_mm,static}
@@ -59,11 +59,8 @@ interface
 {$linklib esp_hal_pmu,static}
 {$linklib esp_hal_security,static}
 {$linklib esp_hal_systimer,static}
-{$linklib esp_hal_timg,static}
 {$linklib esp_hal_touch_sens,static}
 {$linklib esp_hal_uart,static}
-{$linklib esp_hal_usb,static}
-{$linklib esp_hal_wdt,static}
 {$linklib heap,static}
 {$linklib log,static}
 {$linklib mbedcrypto,static}
@@ -72,13 +69,12 @@ interface
 {$linklib soc,static}
 {$linklib spi_flash,static}
 {$linklib vfs,static}
-{$linklib xt_hal.a,static}
+{$linklib xt_hal,static}
 {$linklib xtensa,static}
 
 {$linklib c,static}
 {$linklib m,static}
 {$linklib gcc,static}
-{$linklib esp_gdbstub,static}
 {$linklib espcoredump,static}
 
 implementation
