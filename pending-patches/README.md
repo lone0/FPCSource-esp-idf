@@ -53,7 +53,7 @@ The RTL makefile does not track `.inc` includes: after any
   nil (`PC=0`, InstrFetchProhibited). Upstream-report candidate.
 
 - **xtensa-04 (finalize order) → `compiler/xtensa/ncpuutil.pas` —
-  APPLIED (2026-10-24, on `esp32s3-esp-idf-6.1-support`).**
+  APPLIED (2026-10-24).**
   `FPC_FINALIZE_FUNC_TABLE` iterated init/finalize entries **forward**;
   SysUtils' `TEncoding` destructor freed standard encodings before Classes
   teardown → use-after-free at exit with live `TStrings`. Fix: separate

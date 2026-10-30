@@ -3,12 +3,9 @@
 **This tree:** Free Pascal trunk 3.3.1 with **ESP-IDF 6.1** FreeRTOS support
 for ESP32-S3 (Xtensa) and ESP32-S31 (RISC-V ILP32F).
 
-| Branch | Role |
-| --- | --- |
-| `esp32s3-esp-idf-6.1-support` | ESP-IDF 6.1 S3 base (freertos-01/03 + **xtensa-04 applied**) |
-| `esp-idf-6.1-support` | Older shared base (freertos-01/03 only; superseded for S3/S31 work) |
-| `cursor/s31-ilp32f-minimal-d051` | Active S31 / ILP32F work (from `f77f50be`, rebased onto `esp32s3-esp-idf-6.1-support`) |
-| `cursor/esp32s31-support-10bc` | Frozen merge tip — do not amend |
+**Public branch:** `esp-idf-6.1-s3/s31` — the only active line for this work
+(freertos-01/03, xtensa-04 + RISC-V reverse finalize, ILP32F, trimmed IDF 6.1
+`$linklib` sets). Do not document or steer work onto other named branches.
 
 Do **not** edit the upstream root `README.md`. Authoritative in-tree agent
 docs: this file and [`pending-patches/`](./pending-patches/README.md).
@@ -47,9 +44,9 @@ needed to run ESP-IDF 6.1 images on ESP32-S3 and ESP32-S31.
 
 ## 3. Freertos / Classes deficiencies (this line)
 
-Tracked under `pending-patches/`. On `esp32s3-esp-idf-6.1-support` (and
-branches rebased on it): freertos-01, freertos-03, and **xtensa-04 are
-applied**; only freertos-02 remains pending.
+Tracked under `pending-patches/`. On this line (`esp-idf-6.1-s3/s31`):
+freertos-01, freertos-03, and **xtensa-04 are applied**; only freertos-02
+remains pending.
 
 1. **freertos-01 — thread-stub events** (`rtl/freertos/systhrd.inc`) — **APPLIED**
    - *Symptom:* every `uses Classes` program died at unit init (`RunError 232`).
@@ -71,7 +68,7 @@ applied**; only freertos-02 remains pending.
      unix). Upstream-report candidate.
 
 4. **xtensa-04 — finalize order** (`compiler/xtensa/ncpuutil.pas`) — **APPLIED**
-   (on `esp32s3-esp-idf-6.1-support`, 2026-10-24)
+   (2026-10-24)
    - *Symptom (Xtensa):* use-after-free at exit with a live `TStrings`
      (SysUtils finalized before Classes → dead `TEncoding` singleton).
    - *Fix:* emit finalize calls in a **separate reverse pass** over the
@@ -111,8 +108,7 @@ applied**; only freertos-02 remains pending.
 ## 5. ESP32-S31 (RISC-V ILP32F) — build, link, and run
 
 Verified on ESP-IDF **v6.1**, Espressif gcc **15.2.0_20251204**,
-`esp-emu` **0.50.0**, branch **`cursor/s31-ilp32f-minimal-d051`**
-(rebased onto `esp32s3-esp-idf-6.1-support`).
+`esp-emu` **0.50.0**, on branch **`esp-idf-6.1-s3/s31`**.
 
 Placeholders:
 
