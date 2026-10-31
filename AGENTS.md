@@ -41,6 +41,11 @@ needed to run ESP-IDF 6.1 images on ESP32-S3 and ESP32-S31.
 6. **Finalize-order fixes live in the compiler.** After changing
    `ncpuutil.pas` / `nrv32util.pas`, rebuild the matching cross compiler
    (`ppcxtensa` / `ppcrv32`); the fix is baked into every program it emits.
+7. **No commits without an explicit instruction.** `git commit` runs only
+   when the user says so in that task ("commit this" / "提交"). "Done and
+   verified" is not authorization; leave work uncommitted and say so in the
+   report. Commit-message conventions (agent signature, no references to
+   trees outside this repository) apply whenever a commit *is* requested.
 
 ## 3. Freertos / Classes deficiencies (this line)
 

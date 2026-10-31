@@ -22,11 +22,12 @@ interface
 { Minimal closure for the ESP32-S31 on IDF v6.1, derived like the xtensa
   espidf_60100 set: member-level archive closure over the undefined symbols
   of every installed RTL+packages object plus the -u anchors the linker
-  driver emits for this controller. SDK-config-dependent archives are absent
-  by design (this closure is against a SPIRAM-less, coredump-less project):
-  SPIRAM builds additionally need libesp_psram.a, coredump builds need
-  libespcoredump.a -- programs declare such extras in their own units
-  (idfheap pattern) or pass -k. }
+  driver emits for this controller. SDK-config-dependent archives are out
+  of scope for this list by design (this closure is against a SPIRAM-less,
+  coredump-less project): SPIRAM builds additionally need libesp_psram.a,
+  coredump builds need libespcoredump.a -- such extras are supplied on the
+  program side (application-unit {$linklib} or -k), never here. Same
+  contract on xtensa (espidf_60100). }
 
 {$linklib app_update,static}
 {$linklib bootloader_support,static}
