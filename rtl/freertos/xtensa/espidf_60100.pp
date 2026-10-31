@@ -25,7 +25,11 @@ interface
   of them are deliberately absent -- SDK projects that skip their components
   (e.g. wifi-less hello_world) then still satisfy this list. Programs that
   use further IDF libraries declare their own {$linklib} in application
-  units, exactly like idfheap does for esp_psram. }
+  units or pass -k. SDK-config-dependent archives are likewise out of
+  scope for this list: SPIRAM builds additionally need libesp_psram.a,
+  coredump builds need libespcoredump.a -- such extras are supplied on the
+  program side (application-unit {$linklib} or -k), never here. Same
+  contract on riscv32 (esp32s31idf_60100). }
 
 {$linklib app_update,static}
 {$linklib bootloader_support,static}
@@ -42,7 +46,6 @@ interface
 {$linklib esp_partition,static}
 {$linklib esp_phy,static}
 //{$linklib esp_pm,static}
-{$linklib esp_psram,static}
 {$linklib esp_ringbuf,static}
 {$linklib esp_rom,static}
 {$linklib esp_stdio,static}
@@ -75,7 +78,6 @@ interface
 {$linklib c,static}
 {$linklib m,static}
 {$linklib gcc,static}
-{$linklib espcoredump,static}
 
 implementation
 
