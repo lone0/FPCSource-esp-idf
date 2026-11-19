@@ -8,7 +8,9 @@ for ESP32-S3 (Xtensa) and ESP32-S31 (RISC-V ILP32F).
 `$linklib` sets). Do not document or steer work onto other named branches.
 
 Do **not** edit the upstream root `README.md`. Authoritative in-tree agent
-docs: this file and [`pending-patches/`](./pending-patches/README.md).
+docs: this file, [`DEPLOY.md`](./DEPLOY.md) (full dual S3/S31 toolchain
+deploy for “deploy free pascal for esp32”), and
+[`pending-patches/`](./pending-patches/README.md).
 
 ---
 
@@ -83,7 +85,7 @@ remains pending.
      live `TStrings` exit clean. Upstream-report candidate (same forward
      iterate in aarch64/arm/avr/riscv generators).
    - *S31 note:* this file is **Xtensa-only**. RISC-V needs the same
-     contract in `compiler/riscv32/nrv32util.pas` (see §5.6).
+     contract in `compiler/riscv32/nrv32util.pas` (see §5.5).
 
 ### Triage quick guide
 
@@ -92,16 +94,20 @@ remains pending.
 - Crash at **Xtensa exit** with live `TStrings` → should be fixed by
   xtensa-04 on this base; rebuild `ppcxtensa` if an old compiler binary.
 - Crash at **S31 / RISC-V exit** after Classes work → apply/verify the
-  `nrv32util.pas` reverse-finalize change and rebuild `ppcrv32` (§5.6).
+  `nrv32util.pas` reverse-finalize change and rebuild `ppcrv32` (§5.5).
 - Want Pascal `TThread` → freertos-02 (still loud / raise, not real threads).
 - Want real concurrency → FreeRTOS C API via `cdecl` externals
   (`xTaskCreatePinnedToCore`, …); do not weaken freertos-01.
 
 ## 4. ESP32-S3 notes (IDF 6.1 / this tree)
 
+Rebuild / install / dual-SoC deploy: **[`DEPLOY.md`](./DEPLOY.md)** (do not
+duplicate recipes here).
+
 - Controller: `-Wpesp32s3 -WP6.1`, subarch `lx7hf`, hard float (`-Cfhard` /
   `OPT=-CfHARD` on RTL as required by this tree’s build).
-- Compiler: `compiler/ppcxtensa` (must include applied xtensa-04).
+- Compiler: in-tree `compiler/ppcxtensa` (must include applied xtensa-04);
+  installed name for `esp-units` is `ppcrossxtensa`.
   RTL: `rtl/units/xtensa-freertos`.
 - IDF 6.1 on S3 uses picolibc for the app image; match the C link set from
   a built IDF project (keep-alives and `$linklib` lists live in
@@ -110,22 +116,16 @@ remains pending.
   (`qemu-system-xtensa`, machine `esp32s3`). Prefer the toolchain version
   that ships with the IDF 6.1 install.
 
-## 5. ESP32-S31 (RISC-V ILP32F) — build, link, and run
+## 5. ESP32-S31 (RISC-V ILP32F) — ABI, link, and run
 
 Verified on ESP-IDF **v6.1**, Espressif gcc **15.2.0_20251204**,
 `esp-emu` **0.50.0**, on branch **`esp-idf-6.1-s3/s31`**.
 
-Placeholders:
-
-| Name | Meaning |
-| --- | --- |
-| `$FPC_SRC` | This repository root (the FPC source tree) |
-| `$FPC_PREFIX` | **Install prefix** — directory you pass to `make install PREFIX=…` (or equivalent). Holds the installed cross compiler under `lib/fpc/<version>/` and units under `lib/fpc/<version>/units/…`. Choose any writable location; there is no required host path. |
-| `$IDF_PATH` | ESP-IDF v6.1 checkout |
-| `$IDF_PROJECT` | An `idf.py` project with `CONFIG_IDF_TARGET=esp32s31` |
-| Espressif tools | Wherever `./install.sh` / `idf_tools.py` placed the RISC-V gcc (override with `IDF_TOOLS_PATH` if non-default) |
-
-You may also drive builds from the **in-tree** binaries (`$FPC_SRC/compiler/ppcrv32` and `$FPC_SRC/rtl/units/riscv32-freertos`) without installing; `$FPC_PREFIX` is only needed once you `make install`.
+**Compiler + RTL rebuild, IDF install, prefixes, hello-world:** follow
+[`DEPLOY.md`](./DEPLOY.md). This section keeps S31-only ABI / link / emu
+facts that are not repeated there. Placeholders (`$FPC_SRC`,
+`$FPC_PREFIX_S31`, `$IDF_PATH`, `$IDF_PROJECT_S31`, …) are defined in
+`DEPLOY.md`.
 
 ### 5.1 What S31 is in this toolchain
 
@@ -133,8 +133,8 @@ You may also drive builds from the **in-tree** binaries (`$FPC_SRC/compiler/ppcr
 | --- | --- |
 | CPU / ISA | RISC-V `rv32imafc` (F present; **no D**) |
 | ABI | **ILP32F** — 32-bit float in F registers; 64-bit float is an integer register pair (libgcc / ROM RVFPLIB) |
-| Compiler | In-tree `$FPC_SRC/compiler/ppcrv32`, or `$FPC_PREFIX/lib/fpc/<version>/ppcrv32` after install (symlink `ppcriscv32` OK) |
-| RTL | In-tree `$FPC_SRC/rtl/units/riscv32-freertos`, or `$FPC_PREFIX/lib/fpc/<version>/units/riscv32-freertos` |
+| Compiler | In-tree `$FPC_SRC/compiler/ppcrv32`; installed **`ppcrossrv32`** under `$FPC_PREFIX_S31/lib/fpc/<version>/` (no naming symlinks) |
+| RTL | In-tree `$FPC_SRC/rtl/units/riscv32-freertos`, or the matching units under `$FPC_PREFIX_S31` |
 | Program flags | `-Tfreertos -Priscv32 -Cprv32imafc -Wpesp32s31 -WP6.1 -XPriscv32-esp-elf-` plus explicit `-Ch…` (static freertos heap for now) |
 | RTL `CROSSOPT` | **`-Cprv32imafc` only** — never `-Wpesp32s31` here (circular with `consoleio`) |
 | Emulator | [`esp-emu`](https://github.com/espressif/esp-emulator) `--chip esp32s31` |
@@ -144,40 +144,10 @@ ILP32F must **not** emit D opcodes (`FSD`/`FLD`/`FSQRT.D`, …). Guards:
 `compiler/riscv/cgrv.pas` / `nrvinl.pas` (`ilp32f_no_d`). Register save:
 `rtl/riscv32/setjump.inc`.
 
-### 5.2 Rebuild compiler + RTL
+### 5.2 IDF libraries (S31-specific)
 
-Put the Espressif `riscv32-esp-elf` toolchain `bin/` on `PATH` (from your
-Espressif tools install; version pin as required by IDF 6.1).
-
-```sh
-unset FPC CROSSOPT BINUTILSPREFIX
-cd "$FPC_SRC"
-make -C compiler cycle
-make -C compiler riscv32
-export FPC="$FPC_SRC/compiler/ppcrv32"
-export CROSSOPT='-Cprv32imafc'
-export BINUTILSPREFIX=riscv32-esp-elf-
-rm -rf rtl/units/riscv32-freertos
-make -C rtl OS_TARGET=freertos CPU_TARGET=riscv32 SUBARCH=rv32imafc
-# Optional install into a prefix of your choosing:
-# make -C compiler install PREFIX="$FPC_PREFIX"
-# make -C rtl install OS_TARGET=freertos CPU_TARGET=riscv32 SUBARCH=rv32imafc \
-#   PREFIX="$FPC_PREFIX"
-```
-
-### 5.3 IDF project + libraries
-
-```sh
-unset IDF_PATH IDF_PYTHON_ENV_PATH IDF_TOOLS_PATH
-export IDF_PATH=…/esp-idf-v6.1          # tag v6.1
-cd "$IDF_PATH" && ./install.sh esp32s31 && . ./export.sh
-cd "$IDF_PROJECT"
-idf.py --preview set-target esp32s31
-# sdkconfig: CONFIG_SPIRAM=y, OCT, boot init/malloc/memtest as needed
-idf.py --preview build
-```
-
-Flatten `$IDF_PROJECT/build/esp-idf/**/lib*.a` onto the FPC `-Fl` path
+After the IDF project is built per `DEPLOY.md`, flatten
+`$IDF_PROJECT_S31/build/esp-idf/**/lib*.a` onto the FPC `-Fl` path
 (skip `libmain.a`). **Duplicate basenames** (mbedtls wrapper + full copy)
 must be `ar`-merged. Symlink coexist if present:
 `$IDF_PATH/components/esp_coex/lib/esp32s31/libcoexist.a`, plus IDF
@@ -188,7 +158,7 @@ S31-oriented `$linklib` set:
 (flash-side regi2c; S3 uses ROM) and `mbedcrypto` / `mbedtls` /
 `tfpsacrypto` / `esp_security` for PSA bring-up.
 
-### 5.4 Linker / ROM scripts — picolibc traps
+### 5.3 Linker / ROM scripts — picolibc traps
 
 IDF 6.1 on S31 uses **picolibc**. In `compiler/systems/t_freertos.pas`
 (`ct_esp32s31`):
@@ -212,7 +182,7 @@ Espressif gcc install / whatever `riscv32-esp-elf-gcc -print-sysroot` /
 $(dirname $(riscv32-esp-elf-gcc -march=rv32imafc -mabi=ilp32f -print-libgcc-file-name))
 ```
 
-### 5.5 Boot in `esp-emu`
+### 5.4 Boot in `esp-emu`
 
 ```sh
 esp-emu --chip esp32s31 --firmware flash.bin \
@@ -222,7 +192,7 @@ esp-emu --chip esp32s31 --firmware flash.bin \
 Smoke success markers: `HELLO_WORLD_DONE`, `HELLO_FPU_DONE`, clean
 `_haltproc`. Fail on `Guru Meditation`, `abort(`, or `*_FAIL`.
 
-### 5.6 Patch series vs S31 / RISC-V finalize order
+### 5.5 Patch series vs S31 / RISC-V finalize order
 
 | Patch | Status on S3 base | S31 note |
 | --- | --- | --- |
@@ -233,13 +203,14 @@ Smoke success markers: `HELLO_WORLD_DONE`, `HELLO_FPU_DONE`, clean
 
 **RISC-V analogue:** the same forward-iterate bug lives in
 `compiler/riscv32/nrv32util.pas`. Mirror xtensa-04 there (init forward,
-finalize reverse) and **rebuild `ppcrv32`**. With that change applied and
-the compiler rebuilt, `hello_classes` (TStringList + AnsiCompare*, no
-Sort) reaches `HELLO_CLASSES_DONE` and clean `_haltproc` on `esp-emu`
-(verified 2026-10-25). Without it, exit was a Core1 Cache / finalize
-Guru. Sort on tiny `-Ch8192` remains a separate heap-size issue.
+finalize reverse) and **rebuild `ppcrv32` / `ppcrossrv32`** (see
+`DEPLOY.md`). With that change applied and the compiler rebuilt,
+`hello_classes` (TStringList + AnsiCompare*, no Sort) reaches
+`HELLO_CLASSES_DONE` and clean `_haltproc` on `esp-emu` (verified
+2026-10-25). Without it, exit was a Core1 Cache / finalize Guru. Sort on
+tiny `-Ch8192` remains a separate heap-size issue.
 
-### 5.7 S31 review checklist
+### 5.6 S31 review checklist
 
 1. `-Cprv32imafc -Wpesp32s31 -WP6.1` and ILP32F libgcc/picolibc?
 2. No `rom.newlib` / `rom.newlib-nano` on the link line?
@@ -247,10 +218,12 @@ Guru. Sort on tiny `-Ch8192` remains a separate heap-size issue.
 4. `esp-emu --chip esp32s31` with adequate `--psram-size`?
 5. DONE marker **and** no Guru/abort?
 6. No D-extension opcodes on Double paths?
-7. `ppcrv32` rebuilt after any `nrv32util.pas` finalize-order change?
-8. After a change to the ILP32F float assignment or `x*x` rewrite (§5.8), rebuild the cross compiler and the riscv32-freertos RTL. `fpc_sqr_real` is part of the system unit.
+7. Cross compiler rebuilt after any `nrv32util.pas` finalize-order change?
+8. After a change to the ILP32F float assignment or `x*x` rewrite (§5.7),
+   rebuild the cross compiler and the riscv32-freertos RTL
+   (`fpc_sqr_real` is part of the system unit).
 
-## 5.8 Single FPU, soft double
+### 5.7 Single FPU, soft double
 
 On ILP32F, Pascal `Real`, `ValReal`, best-real, and `Extended` are double, as on Xtensa. The FPU is single-precision. A 32-bit float lives in an F register. A 64-bit float is an integer pair and uses libgcc or ROM RVFPLIB (`__adddf3`, `__muldf3`, `__extendsfdf2`, `__truncdfsf2`, and the rest of that set). The compiler sets `fputype` to `fpu_fd` so shared RISC-V code can name those operations. `ilp32f_soft_double` is true for an s64real on the ILP32F or LP64F ABI, and that predicate suppresses D opcodes. It is false on Xtensa.
 
@@ -262,6 +235,9 @@ Xtensa has no double FPU in this tree either. `fpu_hard` is `[FPUXTENSA_SINGLE]`
 
 ## 6. Where detail lives
 
+- [`DEPLOY.md`](./DEPLOY.md) — six-step IDF 6.1 + dual `ppcross*` install,
+  IDF project requirements, hello-world / `esp-units` smoke. Use this when
+  asked to **deploy free pascal for esp32**.
 - [`pending-patches/README.md`](./pending-patches/README.md) — apply gates,
   discriminators, applied history (xtensa-04 recorded as applied).
 - `compiler/systems/t_freertos.pas` — per-controller ROM/script link lines.

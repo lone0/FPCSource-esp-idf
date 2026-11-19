@@ -1597,7 +1597,12 @@ begin
           '-u vfs_include_syscalls_impl -u uart_vfs_include_dev_init -u esp_vfs_include_console_register '+
           '-u esp_system_include_startup_funcs -u start_app -u start_app_other_cores '+
           '-u esp_timer_init_include_func -u esp_efuse_startup_include_func -u esp_flash_spi_init_include_func '+
-          '-u esp_sleep_gpio_include -u usb_serial_jtag_vfs_include_dev_init -u usb_serial_jtag_connection_monitor_include '+
+          { Do not -u usb_serial_jtag_connection_monitor_include: IDF 6.1.1+ that
+            object calls rtc_clk_bbpll_add_consumer() and spins forever under
+            Espressif QEMU (no BBPLL_CAL_DONE). IDF only force-links it when
+            USJ is the console or CONFIG_USJ_NO_AUTO_LS_ON_CONNECTION. Same
+            for usb_serial_jtag_vfs_include_dev_init — only when USJ console. }
+          '-u esp_sleep_gpio_include '+
           '-L $IDF_PATH/components/esp_rom/'+cntrlr+'/ld '
       else
         Info.ExeCmd[1]:=Info.ExeCmd[1]+' -u call_user_start_cpu0 -u ld_include_panic_highint_hdl -u esp_app_desc -u vfs_include_syscalls_impl -u pthread_include_pthread_impl -u pthread_include_pthread_cond_impl -u pthread_include_pthread_local_storage_impl -u newlib_include_locks_impl '+
