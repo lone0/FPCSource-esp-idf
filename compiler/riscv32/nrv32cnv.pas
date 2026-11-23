@@ -177,28 +177,18 @@ implementation
       var
         restype: tfloattype;
       begin
+        { Always convert via GPR + fcvt.*.w[u]. The old memory path used
+          a_loadfpu_ref_reg(OS_F32), which bitcasts integer bits with flw
+          instead of a numeric conversion (GitLab #42119). Match nrv64cnv. }
         location_reset(location, LOC_FPUREGISTER, def_cgsize(resultdef));
 
         restype:=tfloatdef(resultdef).floattype;
 
         location.Register := cg.getfpuregister(current_asmdata.CurrAsmList, tfloat2tcgsize[restype]);
-        if (left.location.loc in [LOC_REGISTER,LOC_CREGISTER]) then
-          begin
-            current_asmdata.CurrAsmList.concat(taicpu.op_reg_reg(ops[is_signed(left.resultdef),restype], location.register, left.location.register));
-          end
-        else
-          begin
-            { Load memory in fpu register }
-            hlcg.location_force_mem(current_asmdata.CurrAsmList, left.location, left.resultdef);
-            cg.a_loadfpu_ref_reg(current_asmdata.CurrAsmList, OS_F32, OS_F32, left.location.reference, location.Register);
-            tg.ungetiftemp(current_asmdata.CurrAsmList, left.location.reference);
-
-            case restype of
-              s64real: cg.a_loadfpu_reg_reg(current_asmdata.CurrAsmList, OS_F32, OS_F64, location.register, location.Register);
-              else
-                ;
-            end;
-          end;
+        if not(left.location.loc in [LOC_REGISTER,LOC_CREGISTER]) then
+          hlcg.location_force_reg(current_asmdata.CurrAsmList, left.location, left.resultdef, left.resultdef, true);
+        current_asmdata.CurrAsmList.concat(taicpu.op_reg_reg(
+          ops[is_signed(left.resultdef),restype], location.register, left.location.register));
       end;
 
 begin
